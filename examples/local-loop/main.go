@@ -1,0 +1,53 @@
+// local-loop demonstrates the v0.5 identity flow against eidovelad.
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/axisrobo/eidovela-open/sdk/go/eidovela"
+)
+
+func main() {
+	ctx := context.Background()
+	client := eidovela.NewClient("http://localhost:8080")
+	_, privateKey, err := eidovela.GeneratePoPKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	agent, err := client.RegisterAgent(ctx, eidovela.RegisterAgentRequest{
+		Class: "service", BindingType: "organization_root", AuthorityRootRef: "org:example",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	workload, err := client.RegisterWorkload(ctx, eidovela.WorkloadRegistrationRequest{
+		Platform: "kubernetes", Selector: map[string]string{"namespace": "default", "serviceaccount": "demo"},
+		TrustDomain: "local", AllowedProofMethods: []string{"private_key_jwt"},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	challenge, err := client.CreateChallenge(ctx, agent.AgentID, workload.RegistrationID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	instance, err := client.CompleteEnrollment(ctx, challenge, privateKey, "praxovela", "demo-workload", "sha256:demo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := client.Activate(ctx, agent.AgentID); err != nil {
+		log.Fatal(err)
+	}
+	token, err := client.Token(ctx, agent.AgentID, instance.InstanceID, "aegivela", privateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	active, err := client.Introspect(ctx, token.Token, privateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("agent=%s instance=%s token_active=%t\n", agent.AgentID, instance.InstanceID, active)
+}
