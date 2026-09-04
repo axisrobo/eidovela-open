@@ -34,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	instance, err := client.CompleteEnrollment(ctx, challenge, privateKey, "praxovela", "demo-workload", "sha256:demo")
+	instance, err := client.CompleteEnrollment(ctx, challenge, privateKey, "praxovela", "demo-workload", "sha256:demo", map[string]string{"namespace": "default", "serviceaccount": "demo"})
 	if err != nil {
 		log.Fatal(err)
 	}

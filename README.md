@@ -29,6 +29,10 @@ The example registers a Service Agent, registers a workload profile, completes
 `private_key_jwt` enrollment, activates the Agent, obtains a short-lived
 PoP-bound token, then authoritatively introspects it.
 
+Enrollment supplies workload attributes that must exactly match every selector
+on the registered workload profile; callers cannot bypass workload binding by
+asserting only an Agent ID.
+
 The Go SDK is available at `sdk/go/eidovela`. It contains the HTTP client,
 Ed25519 PoP key generation and offline JWT/JWKS verification. Offline
 verification does not check the current lifecycle epoch; high-risk consumers

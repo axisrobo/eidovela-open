@@ -106,7 +106,9 @@ func (c *Client) CreateChallenge(ctx context.Context, agentID, workloadRegistrat
 	return challenge, err
 }
 
-func (c *Client) CompleteEnrollment(ctx context.Context, challenge Challenge, privateKey ed25519.PrivateKey, runtime, workloadID, artifactDigest string) (Instance, error) {
+// CompleteEnrollment binds a proof key to a workload only when its verified
+// workloadAttributes satisfy every selector in the workload registration.
+func (c *Client) CompleteEnrollment(ctx context.Context, challenge Challenge, privateKey ed25519.PrivateKey, runtime, workloadID, artifactDigest string, workloadAttributes map[string]string) (Instance, error) {
 	pub := privateKey.Public().(ed25519.PublicKey)
 	proof, err := enrollmentProof(challenge, privateKey)
 	if err != nil {
@@ -114,12 +116,13 @@ func (c *Client) CompleteEnrollment(ctx context.Context, challenge Challenge, pr
 	}
 	var instance Instance
 	err = c.post(ctx, "/v1/enrollments/complete", map[string]any{
-		"enrollment_id":   challenge.ID,
-		"proof_jwt":       proof,
-		"public_key":      JWKFromPublic(pub, ""),
-		"runtime":         runtime,
-		"workload_id":     workloadID,
-		"artifact_digest": artifactDigest,
+		"enrollment_id":       challenge.ID,
+		"proof_jwt":           proof,
+		"public_key":          JWKFromPublic(pub, ""),
+		"runtime":             runtime,
+		"workload_id":         workloadID,
+		"artifact_digest":     artifactDigest,
+		"workload_attributes": workloadAttributes,
 	}, &instance)
 	return instance, err
 }
