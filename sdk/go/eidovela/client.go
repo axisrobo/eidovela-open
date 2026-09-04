@@ -150,6 +150,18 @@ func (c *Client) Token(ctx context.Context, agentID, instanceID, audience string
 	return token, err
 }
 
+// Exchange requests an RFC 8693 attenuation token. The core only permits the
+// child to retain the parent audience and expiry; audience widening is denied.
+func (c *Client) Exchange(ctx context.Context, subjectToken, parentAudience, requestedAudience string, privateKey ed25519.PrivateKey) (TokenResponse, error) {
+	var token TokenResponse
+	err := c.post(ctx, "/v1/token/exchange", map[string]any{
+		"subject_token": subjectToken, "parent_audience": parentAudience,
+		"requested_audience": requestedAudience,
+		"public_key":         JWKFromPublic(privateKey.Public().(ed25519.PublicKey), ""),
+	}, &token)
+	return token, err
+}
+
 func (c *Client) Introspect(ctx context.Context, token string, privateKey ed25519.PrivateKey) (bool, error) {
 	var response struct {
 		Active bool `json:"active"`

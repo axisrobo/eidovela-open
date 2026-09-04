@@ -37,3 +37,7 @@ The Go SDK is available at `sdk/go/eidovela`. It contains the HTTP client,
 Ed25519 PoP key generation and offline JWT/JWKS verification. Offline
 verification does not check the current lifecycle epoch; high-risk consumers
 must use authoritative introspection.
+
+The SDK also supports the initial RFC 8693 token-exchange profile. Exchanged
+tokens retain the verified parent identity, PoP key, audience and expiry; the
+profile rejects audience widening.
