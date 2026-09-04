@@ -1,0 +1,25 @@
+{
+  "id": "N-T6-1",
+  "description": "A token signed by a rotated key is rejected after that key's configured overlap window ends",
+  "threat_ref": "T6",
+  "expectation": "deny",
+  "deny_reason": "retired signing key outside overlap window",
+  "input": {
+    "operation": "verify_token",
+    "claims": {
+      "iss": "https://eidovela.example.test/t/tenant-a",
+      "aud": "aegivela",
+      "agent_id": "agt_01",
+      "lifecycle_epoch": 3,
+      "kid": "retired-kid",
+      "cnf": { "jkt": "REF:key-a" }
+    },
+    "proof": { "method": "private_key_jwt", "key_ref": "key-a" },
+    "registry_state": {
+      "agent_id": "agt_01",
+      "lifecycle_state": "active",
+      "lifecycle_epoch": 3,
+      "jwks": ["active-kid"]
+    }
+  }
+}
