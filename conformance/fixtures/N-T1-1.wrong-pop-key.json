@@ -1,0 +1,24 @@
+{
+  "id": "N-T1-1",
+  "description": "Valid token presented with a different proof key than bound cnf",
+  "threat_ref": "T1",
+  "expectation": "deny",
+  "deny_reason": "proof key does not match cnf",
+  "input": {
+    "operation": "verify_token",
+    "claims": {
+      "iss": "https://eidovela.example.test/t/tenant-a",
+      "aud": "aegivela",
+      "agent_id": "agt_01",
+      "instance_id": "ins_01",
+      "lifecycle_epoch": 3,
+      "cnf": { "jwk thumbprint": "REF:key-a" }
+    },
+    "proof": { "method": "private_key_jwt", "key_ref": "key-b" },
+    "registry_state": {
+      "agent_id": "agt_01",
+      "lifecycle_state": "active",
+      "lifecycle_epoch": 3
+    }
+  }
+}

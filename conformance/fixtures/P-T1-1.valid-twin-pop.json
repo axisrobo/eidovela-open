@@ -1,0 +1,28 @@
+{
+  "id": "P-T1-1",
+  "description": "Active twin agent presents token with matching PoP key and bound workload",
+  "threat_ref": "T1",
+  "expectation": "allow",
+  "input": {
+    "operation": "verify_token",
+    "claims": {
+      "iss": "https://eidovela.example.test/t/tenant-a",
+      "aud": "aegivela",
+      "agent_id": "agt_01",
+      "agent_class": "twin",
+      "instance_id": "ins_01",
+      "workload_id": "wl_01",
+      "authority_root_ref": "user:alice@example.test",
+      "lifecycle_epoch": 3,
+      "cnf": { "jwk thumbprint": "REF:key-a" }
+    },
+    "proof": { "method": "private_key_jwt", "key_ref": "key-a" },
+    "registry_state": {
+      "agent_id": "agt_01",
+      "lifecycle_state": "active",
+      "lifecycle_epoch": 3,
+      "instance_id": "ins_01",
+      "workload_id": "wl_01"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "N-T4-1",
+  "description": "Unexpired token issued before suspension carries stale lifecycle epoch",
+  "threat_ref": "T4",
+  "expectation": "deny",
+  "deny_reason": "stale lifecycle epoch",
+  "input": {
+    "operation": "verify_token",
+    "claims": {
+      "iss": "https://eidovela.example.test/t/tenant-a",
+      "aud": "aegivela",
+      "agent_id": "agt_01",
+      "instance_id": "ins_01",
+      "lifecycle_epoch": 3,
+      "cnf": { "jwk thumbprint": "REF:key-a" }
+    },
+    "proof": { "method": "private_key_jwt", "key_ref": "key-a" },
+    "registry_state": {
+      "agent_id": "agt_01",
+      "lifecycle_state": "suspended",
+      "lifecycle_epoch": 4
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eidovela.axisrobo.io/contracts/v1alpha1/agent-identity.json",
+  "title": "AgentIdentity",
+  "type": "object",
+  "required": [
+    "agent_id",
+    "tenant_id",
+    "agent_class",
+    "authority_root_ref",
+    "lifecycle_state",
+    "lifecycle_epoch",
+    "created_at"
+  ],
+  "properties": {
+    "agent_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "agent_class": { "type": "string", "enum": ["twin", "service", "ephemeral"] },
+    "blueprint_id": { "type": "string" },
+    "blueprint_version": { "type": "string" },
+    "authority_root_ref": { "type": "string" },
+    "sponsor_ref": { "type": "string" },
+    "lifecycle_state": { "type": "string", "enum": ["draft", "registered", "enrolled", "active", "suspended", "revoked"] },
+    "lifecycle_epoch": { "type": "integer", "minimum": 0 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

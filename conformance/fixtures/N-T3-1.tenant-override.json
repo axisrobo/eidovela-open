@@ -1,0 +1,23 @@
+{
+  "id": "N-T3-1",
+  "description": "Caller-supplied tenant_id differs from verified issuer/binding mapping",
+  "threat_ref": "T3",
+  "expectation": "deny",
+  "deny_reason": "tenant override attempt",
+  "input": {
+    "operation": "issue_token",
+    "claims": {
+      "agent_id": "agt_01"
+    },
+    "caller_context": {
+      "verified_tenant_id": "tenant-a",
+      "supplied_tenant_id": "tenant-b"
+    },
+    "registry_state": {
+      "agent_id": "agt_01",
+      "tenant_id": "tenant-a",
+      "lifecycle_state": "active",
+      "lifecycle_epoch": 3
+    }
+  }
+}

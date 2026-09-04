@@ -1,0 +1,19 @@
+{
+  "id": "N-G1-1",
+  "description": "Token from an unknown issuer is rejected (fail closed)",
+  "threat_ref": "G1",
+  "expectation": "deny",
+  "deny_reason": "unknown issuer",
+  "input": {
+    "operation": "verify_token",
+    "claims": {
+      "iss": "https://attacker.example.test/",
+      "aud": "aegivela",
+      "agent_id": "agt_01",
+      "lifecycle_epoch": 1
+    },
+    "registry_state": {
+      "federation_trusts": ["https://eidovela.example.test/t/tenant-a"]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eidovela.axisrobo.io/conformance/fixture.schema.json",
+  "title": "EidovelaConformanceFixture",
+  "description": "One positive or negative conformance case for EIDOVELA issuers/verifiers",
+  "type": "object",
+  "required": ["id", "threat_ref", "expectation", "input"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^(P|N)-T[1-8]-[0-9]+$|^(P|N)-G[0-6]-[0-9]+$" },
+    "description": { "type": "string" },
+    "threat_ref": { "type": "string" },
+    "expectation": { "type": "string", "enum": ["allow", "deny"] },
+    "deny_reason": { "type": "string" },
+    "input": {
+      "type": "object",
+      "required": ["operation"],
+      "properties": {
+        "operation": { "type": "string", "enum": ["enroll", "issue_token", "verify_token", "introspect", "lifecycle_transition", "resolve_principal"] },
+        "claims": { "type": "object" },
+        "proof": { "type": "object" },
+        "registry_state": { "type": "object" },
+        "caller_context": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
