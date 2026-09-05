@@ -1,0 +1,12 @@
+{
+  "id": "N-T2-4",
+  "description": "SPIFFE SVID from an unexpected trust domain cannot satisfy workload enrollment",
+  "threat_ref": "T2",
+  "expectation": "deny",
+  "deny_reason": "SPIFFE trust domain mismatch",
+  "input": {
+    "operation": "enroll",
+    "proof": { "method": "spiffe_svid", "spiffe_id": "spiffe://other.example.test/ns/payments/sa/agent" },
+    "registry_state": { "trust_domain": "prod.example.test", "selector": { "spiffe_path": "/ns/payments/sa/agent" } }
+  }
+}
