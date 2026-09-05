@@ -1,0 +1,12 @@
+{
+  "id": "N-T2-6",
+  "description": "A chain-verified mTLS client certificate with mismatched workload selector is rejected",
+  "threat_ref": "T2",
+  "expectation": "deny",
+  "deny_reason": "mTLS certificate selector mismatch",
+  "input": {
+    "operation": "enroll",
+    "proof": { "method": "mtls", "subject_cn": "other-agent", "client_auth": true },
+    "registry_state": { "selector": { "subject_cn": "payments-agent" } }
+  }
+}
