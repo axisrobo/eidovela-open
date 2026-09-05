@@ -16,7 +16,7 @@ Contents:
 
 Version format: `major.minor.patch`. Current: 0.1.0.
 
-Distribution governance: `STATUS.md`, `ROADMAP.md`, `COMPATIBILITY.md` and `contracts/README.md`.
+Distribution governance: `STATUS.md`, `COMPATIBILITY.md` and `contracts/README.md`.
 
 ## v0.5 local loop
 
