@@ -2,11 +2,39 @@
 
 Public contracts, SDKs, CLI, examples and conformance fixtures for EIDOVELA — the Agent Identity Provider & Authentication Authority.
 
-- Module: `github.com/axisrobo/eidovela-open`
-- License: Apache-2.0
-- Core implementation (AGPL): https://github.com/axisrobo/eidovela
+**Product: EIDOVELA** solves the core identity plumbing for agent-based systems:
+tenant-scoped trust domains, workload attestation with platform recognition
+(kubernetes/spiffe/mTLS), private_key_jwt enrollment, and lifecycle-aware token
+issuance. It bridges the gap between authentication (who) and authorization
+(what/where), providing a verified foundation for federation and console
+workflows.
 
-Contents:
+**License:** Apache-2.0 — source available, core AGPL implementation at
+https://github.com/axisrobo/eidovela (identity/authentication) + AEGIVELA
+(authorization/delegation).
+
+**Module:** `github.com/axisrobo/eidovela-open`
+
+---
+
+## About
+
+EIDOVELA (identity/authentication) + AEGIVELA (authorization/delegation) = Agent IAM.
+This repository (`eidovela-open`, Apache-2.0) publishes the public contracts,
+SDKs, and client libraries that consume the core EIDOVELA authority.
+
+**Public API surface:** introspect, token exchange, federation handoff,
+audience-aware verification.
+
+**Docs (Chinese):** <https://github.com/axisrobo/eidovela/blob/main/docs/README.md>
+
+**Topics:** `eidovela` `identity` `authentication` `oidc` `workload-attestation` —
+see the [Chinese docs](https://github.com/axisrobo/eidovela/blob/main/docs/README.md)
+for full reference.
+
+---
+
+## Contents
 
 - `contracts/` — versioned public contract schemas (v1alpha1)
 - `sdk/go` — Go SDK
