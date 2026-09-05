@@ -1,0 +1,27 @@
+{
+  "id": "N-T8-1",
+  "description": "A token issued for one audience is inactive when introspected for another",
+  "threat_ref": "T8",
+  "expectation": "deny",
+  "deny_reason": "audience mismatch",
+  "scenario": {
+    "agent_class": "twin",
+    "binding_type": "human_master",
+    "authority_root_ref": "user:alice@example.test",
+    "steps": [
+      {
+        "op": "register_workload",
+        "workload": {
+          "platform": "kubernetes",
+          "selector": { "namespace": "prod", "serviceaccount": "agent" },
+          "trust_domain": "example.test",
+          "allowed_proof_methods": ["private_key_jwt"]
+        }
+      },
+      { "op": "complete_enrollment", "attestation": { "method": "private_key_jwt" }, "workload_attributes": { "namespace": "prod", "serviceaccount": "agent" } },
+      { "op": "activate" },
+      { "op": "issue_token", "audience": "aegivela", "present_key": "main" },
+      { "op": "introspect", "audience": "limenora", "present_key": "main", "expect": "deny" }
+    ]
+  }
+}

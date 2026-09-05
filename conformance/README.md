@@ -64,3 +64,4 @@ state.
 | T2 workload attestation | N-T2-4/5/6, P-T2-1/2/3 | spiffe trust-domain, k8s SA, mTLS selector |
 | T4 lifecycle / revocation | N-T4-1/2 | stale epoch + revocation SLO after suspend/revoke |
 | T7 exchange | N-T7-1, P-T7-1 | audience widening denied; same-audience child active |
+| T8 audience binding | N-T8-1 | token inactive under a different introspect audience |
