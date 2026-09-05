@@ -140,14 +140,23 @@ func (c *Client) Suspend(ctx context.Context, agentID string) (Agent, error) {
 }
 
 func (c *Client) Token(ctx context.Context, agentID, instanceID, audience string, privateKey ed25519.PrivateKey) (TokenResponse, error) {
+	proof, err := tokenProof(agentID, instanceID, privateKey)
+	if err != nil {
+		return TokenResponse{}, err
+	}
 	var token TokenResponse
-	err := c.post(ctx, "/oauth2/token", map[string]any{
+	err = c.post(ctx, "/oauth2/token", map[string]any{
 		"agent_id":    agentID,
 		"instance_id": instanceID,
 		"audience":    audience,
 		"public_key":  JWKFromPublic(privateKey.Public().(ed25519.PublicKey), ""),
+		"proof_jwt":   proof,
 	}, &token)
 	return token, err
+}
+
+func tokenProof(agentID, instanceID string, privateKey ed25519.PrivateKey) (string, error) {
+	return sign(privateKey, map[string]any{"iss": agentID, "sub": instanceID, "aud": "eidovela:token", "exp": time.Now().Add(time.Minute).Unix()})
 }
 
 // Exchange requests an RFC 8693 attenuation token. The core only permits the
