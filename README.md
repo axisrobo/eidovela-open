@@ -52,7 +52,7 @@ The core server implementation lives in the AGPL repository: <https://github.com
 - **`eidovela-open` and `eidovela` (core) share the same version tag** (e.g. `v0.3.0`).
 - `eidovela-ee` (enterprise) may carry an independent version/tag.
 
-## Quick start — v0.1 local loop
+## Quick start — local loop
 
 Start the core daemon, then run the public example:
 
