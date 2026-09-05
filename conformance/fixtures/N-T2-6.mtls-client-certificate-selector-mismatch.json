@@ -1,12 +1,29 @@
 {
   "id": "N-T2-6",
-  "description": "A chain-verified mTLS client certificate with mismatched workload selector is rejected",
+  "description": "A chain-verified mTLS client certificate with a mismatched workload selector cannot enroll the Agent",
   "threat_ref": "T2",
   "expectation": "deny",
   "deny_reason": "mTLS certificate selector mismatch",
-  "input": {
-    "operation": "enroll",
-    "proof": { "method": "mtls", "subject_cn": "other-agent", "client_auth": true },
-    "registry_state": { "selector": { "subject_cn": "payments-agent" } }
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:acme",
+    "steps": [
+      {
+        "op": "register_workload",
+        "workload": {
+          "platform": "mtls",
+          "selector": { "subject_cn": "payments-agent" },
+          "trust_domain": "example.test",
+          "allowed_proof_methods": ["private_key_jwt", "mtls"]
+        }
+      },
+      {
+        "op": "complete_enrollment",
+        "attestation": { "method": "mtls", "subject_cn": "other-agent" },
+        "expect": "deny",
+        "deny_reason": "selector"
+      }
+    ]
   }
 }

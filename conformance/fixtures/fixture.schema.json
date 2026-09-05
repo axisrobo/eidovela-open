@@ -2,27 +2,75 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://eidovela.axisrobo.io/conformance/fixture.schema.json",
   "title": "EidovelaConformanceFixture",
-  "description": "One positive or negative conformance case for EIDOVELA issuers/verifiers",
+  "description": "An executable conformance scenario for EIDOVELA. The runner drives a live eidovelad over HTTP, generates real PoP keys and (for spiffe/mtls) self-signed certificates or (for k8s) claim-correct tokens, executes the ordered steps in a fresh tenant, and asserts the scenario expectation.",
   "type": "object",
-  "required": ["id", "threat_ref", "expectation", "input"],
+  "required": ["id", "threat_ref", "expectation", "scenario"],
   "properties": {
     "id": { "type": "string", "pattern": "^(P|N)-T[1-8]-[0-9]+$|^(P|N)-G[0-6]-[0-9]+$" },
     "description": { "type": "string" },
     "threat_ref": { "type": "string" },
     "expectation": { "type": "string", "enum": ["allow", "deny"] },
     "deny_reason": { "type": "string" },
-    "input": {
+    "scenario": {
       "type": "object",
-      "required": ["operation"],
+      "required": ["agent_class", "binding_type", "authority_root_ref", "steps"],
       "properties": {
-        "operation": { "type": "string", "enum": ["enroll", "issue_token", "verify_token", "introspect", "lifecycle_transition", "resolve_principal"] },
-        "claims": { "type": "object" },
-        "proof": { "type": "object" },
-        "registry_state": { "type": "object" },
-        "caller_context": { "type": "object" }
+        "agent_class": { "type": "string", "enum": ["twin", "service", "ephemeral"] },
+        "binding_type": { "type": "string", "enum": ["human_master", "organization_root"] },
+        "authority_root_ref": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/step" }
+        }
       },
       "additionalProperties": false
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "step": {
+      "type": "object",
+      "required": ["op"],
+      "properties": {
+        "op": { "type": "string", "enum": ["register_workload", "complete_enrollment", "activate", "suspend", "revoke", "issue_token", "introspect", "exchange"] },
+        "workload_attributes": {
+          "type": "object",
+          "description": "Caller-supplied attributes for a private_key_jwt enrollment; must satisfy the workload selector.",
+          "additionalProperties": { "type": "string" }
+        },
+        "workload": {
+          "type": "object",
+          "properties": {
+            "platform": { "type": "string", "enum": ["kubernetes", "spiffe", "mtls", "vm", "device"] },
+            "selector": { "type": "object", "additionalProperties": { "type": "string" } },
+            "trust_domain": { "type": "string" },
+            "allowed_proof_methods": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          },
+          "required": ["platform", "selector", "trust_domain", "allowed_proof_methods"],
+          "additionalProperties": false
+        },
+        "attestation": {
+          "type": "object",
+          "description": "Attestation evidence the runner must synthesize.",
+          "properties": {
+            "method": { "type": "string", "enum": ["private_key_jwt", "spiffe_svid", "k8s_projected_sa", "mtls"] },
+            "spiffe_id": { "type": "string", "description": "spiffe://<trust>/<path> URI SAN to place in the generated SVID" },
+            "subject_cn": { "type": "string", "description": "mTLS certificate CN to generate" },
+            "dns_names": { "type": "array", "items": { "type": "string" } },
+            "kubernetes_issuer": { "type": "string", "description": "iss claim of the generated projected-ServiceAccount token" },
+            "kubernetes_subject": { "type": "string", "description": "sub claim, system:serviceaccount:<ns>:<name>" }
+          },
+          "required": ["method"],
+          "additionalProperties": false
+        },
+        "audience": { "type": "string" },
+        "requested_audience": { "type": "string" },
+        "present_key": { "type": "string", "description": "Which PoP key to present: main (default) or attacker" },
+        "expect": { "type": "string", "enum": ["ok", "deny"] },
+        "deny_reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
 }

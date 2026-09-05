@@ -1,24 +1,28 @@
 {
   "id": "N-T4-1",
-  "description": "Unexpired token issued before suspension carries stale lifecycle epoch",
+  "description": "Token issued before suspension carries a stale lifecycle epoch and is inactive after suspend",
   "threat_ref": "T4",
   "expectation": "deny",
   "deny_reason": "stale lifecycle epoch",
-  "input": {
-    "operation": "verify_token",
-    "claims": {
-      "iss": "https://eidovela.example.test/t/tenant-a",
-      "aud": "aegivela",
-      "agent_id": "agt_01",
-      "instance_id": "ins_01",
-      "lifecycle_epoch": 3,
-      "cnf": { "jwk thumbprint": "REF:key-a" }
-    },
-    "proof": { "method": "private_key_jwt", "key_ref": "key-a" },
-    "registry_state": {
-      "agent_id": "agt_01",
-      "lifecycle_state": "suspended",
-      "lifecycle_epoch": 4
-    }
+  "scenario": {
+    "agent_class": "twin",
+    "binding_type": "human_master",
+    "authority_root_ref": "user:alice@example.test",
+    "steps": [
+      {
+        "op": "register_workload",
+        "workload": {
+          "platform": "kubernetes",
+          "selector": { "namespace": "prod", "serviceaccount": "agent" },
+          "trust_domain": "example.test",
+          "allowed_proof_methods": ["private_key_jwt"]
+        }
+      },
+      { "op": "complete_enrollment", "attestation": { "method": "private_key_jwt" }, "workload_attributes": { "namespace": "prod", "serviceaccount": "agent" } },
+      { "op": "activate" },
+      { "op": "issue_token", "audience": "aegivela", "present_key": "main" },
+      { "op": "suspend" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "deny", "deny_reason": "inactive" }
+    ]
   }
 }

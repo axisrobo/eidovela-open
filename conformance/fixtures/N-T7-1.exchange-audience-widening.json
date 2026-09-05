@@ -1,23 +1,27 @@
 {
   "id": "N-T7-1",
-  "description": "Token exchange cannot request an audience outside the verified parent audience",
+  "description": "Token exchange cannot widen the audience beyond the verified parent audience",
   "threat_ref": "T7",
   "expectation": "deny",
-  "deny_reason": "exchange audience would widen parent token",
-  "input": {
-    "operation": "verify_token",
-    "claims": {
-      "parent_audience": "aegivela",
-      "requested_audience": "limenora",
-      "agent_id": "agt_01",
-      "lifecycle_epoch": 3,
-      "cnf": { "jkt": "REF:key-a" }
-    },
-    "proof": { "method": "private_key_jwt", "key_ref": "key-a" },
-    "registry_state": {
-      "agent_id": "agt_01",
-      "lifecycle_state": "active",
-      "lifecycle_epoch": 3
-    }
+  "deny_reason": "exchange audience widening",
+  "scenario": {
+    "agent_class": "twin",
+    "binding_type": "human_master",
+    "authority_root_ref": "user:alice@example.test",
+    "steps": [
+      {
+        "op": "register_workload",
+        "workload": {
+          "platform": "kubernetes",
+          "selector": { "namespace": "prod", "serviceaccount": "agent" },
+          "trust_domain": "example.test",
+          "allowed_proof_methods": ["private_key_jwt"]
+        }
+      },
+      { "op": "complete_enrollment", "attestation": { "method": "private_key_jwt" }, "workload_attributes": { "namespace": "prod", "serviceaccount": "agent" } },
+      { "op": "activate" },
+      { "op": "issue_token", "audience": "aegivela", "present_key": "main" },
+      { "op": "exchange", "audience": "aegivela", "requested_audience": "limenora", "expect": "deny" }
+    ]
   }
 }

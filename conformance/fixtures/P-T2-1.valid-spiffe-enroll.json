@@ -1,9 +1,8 @@
 {
-  "id": "N-T2-4",
-  "description": "SPIFFE SVID from an unexpected trust domain cannot satisfy workload enrollment",
+  "id": "P-T2-1",
+  "description": "A matching SPIFFE SVID satisfies workload enrollment and yields an active token",
   "threat_ref": "T2",
-  "expectation": "deny",
-  "deny_reason": "SPIFFE trust domain mismatch",
+  "expectation": "allow",
   "scenario": {
     "agent_class": "twin",
     "binding_type": "human_master",
@@ -20,10 +19,11 @@
       },
       {
         "op": "complete_enrollment",
-        "attestation": { "method": "spiffe_svid", "spiffe_id": "spiffe://other.example.test/ns/payments/sa/agent" },
-        "expect": "deny",
-        "deny_reason": "trust domain"
-      }
+        "attestation": { "method": "spiffe_svid", "spiffe_id": "spiffe://prod.example.test/ns/payments/sa/agent" }
+      },
+      { "op": "activate" },
+      { "op": "issue_token", "audience": "aegivela", "present_key": "main" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "ok" }
     ]
   }
 }

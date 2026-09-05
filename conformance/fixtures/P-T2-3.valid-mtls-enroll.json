@@ -1,0 +1,29 @@
+{
+  "id": "P-T2-3",
+  "description": "A matching mTLS client certificate satisfies workload enrollment",
+  "threat_ref": "T2",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:acme",
+    "steps": [
+      {
+        "op": "register_workload",
+        "workload": {
+          "platform": "mtls",
+          "selector": { "subject_cn": "payments-agent", "dns_name": "agent.example.test" },
+          "trust_domain": "example.test",
+          "allowed_proof_methods": ["private_key_jwt", "mtls"]
+        }
+      },
+      {
+        "op": "complete_enrollment",
+        "attestation": { "method": "mtls", "subject_cn": "payments-agent", "dns_names": ["agent.example.test"] }
+      },
+      { "op": "activate" },
+      { "op": "issue_token", "audience": "aegivela", "present_key": "main" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "ok" }
+    ]
+  }
+}

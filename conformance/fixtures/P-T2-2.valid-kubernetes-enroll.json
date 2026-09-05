@@ -1,9 +1,8 @@
 {
-  "id": "N-T2-5",
-  "description": "A Kubernetes projected token for the wrong namespace/ServiceAccount cannot enroll the Agent",
+  "id": "P-T2-2",
+  "description": "A matching Kubernetes projected token satisfies workload enrollment",
   "threat_ref": "T2",
-  "expectation": "deny",
-  "deny_reason": "Kubernetes ServiceAccount selector mismatch",
+  "expectation": "allow",
   "scenario": {
     "agent_class": "service",
     "binding_type": "organization_root",
@@ -23,11 +22,12 @@
         "attestation": {
           "method": "k8s_projected_sa",
           "kubernetes_issuer": "https://kubernetes.example.test",
-          "kubernetes_subject": "system:serviceaccount:other:agent"
-        },
-        "expect": "deny",
-        "deny_reason": "selector"
-      }
+          "kubernetes_subject": "system:serviceaccount:payments:agent"
+        }
+      },
+      { "op": "activate" },
+      { "op": "issue_token", "audience": "aegivela", "present_key": "main" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "ok" }
     ]
   }
 }

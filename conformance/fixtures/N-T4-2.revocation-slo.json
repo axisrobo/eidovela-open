@@ -1,9 +1,9 @@
 {
-  "id": "N-T1-1",
-  "description": "Valid token presented with a different proof key than the bound cnf is inactive",
-  "threat_ref": "T1",
+  "id": "N-T4-2",
+  "description": "A token issued before revocation is inactive immediately after the agent is revoked (revocation SLO)",
+  "threat_ref": "T4",
   "expectation": "deny",
-  "deny_reason": "proof key does not match cnf",
+  "deny_reason": "revoked agent",
   "scenario": {
     "agent_class": "twin",
     "binding_type": "human_master",
@@ -21,7 +21,8 @@
       { "op": "complete_enrollment", "attestation": { "method": "private_key_jwt" }, "workload_attributes": { "namespace": "prod", "serviceaccount": "agent" } },
       { "op": "activate" },
       { "op": "issue_token", "audience": "aegivela", "present_key": "main" },
-      { "op": "introspect", "audience": "aegivela", "present_key": "attacker", "expect": "deny", "deny_reason": "inactive" }
+      { "op": "revoke" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "deny" }
     ]
   }
 }

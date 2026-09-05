@@ -1,9 +1,8 @@
 {
-  "id": "N-T1-1",
-  "description": "Valid token presented with a different proof key than the bound cnf is inactive",
-  "threat_ref": "T1",
-  "expectation": "deny",
-  "deny_reason": "proof key does not match cnf",
+  "id": "P-T7-1",
+  "description": "Token exchange within the same audience yields an active child token",
+  "threat_ref": "T7",
+  "expectation": "allow",
   "scenario": {
     "agent_class": "twin",
     "binding_type": "human_master",
@@ -21,7 +20,8 @@
       { "op": "complete_enrollment", "attestation": { "method": "private_key_jwt" }, "workload_attributes": { "namespace": "prod", "serviceaccount": "agent" } },
       { "op": "activate" },
       { "op": "issue_token", "audience": "aegivela", "present_key": "main" },
-      { "op": "introspect", "audience": "aegivela", "present_key": "attacker", "expect": "deny", "deny_reason": "inactive" }
+      { "op": "exchange", "audience": "aegivela", "requested_audience": "aegivela", "expect": "ok" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "ok" }
     ]
   }
 }
