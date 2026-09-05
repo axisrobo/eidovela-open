@@ -33,7 +33,7 @@ Contents:
 - `sdk/go` — Go SDK (HTTP client, Ed25519 PoP key generation, offline JWT/JWKS verification, RFC 8693 token-exchange profile)
 - `cli/` — command-line tool
 - `examples/` — integration examples
-- `conformance/` — positive/negative issuer & verifier fixtures
+- `conformance/` — executable threat-scenario fixtures + HTTP runner (`cmd/eidovela-conformance`) driving a live daemon; ships a prebuilt core daemon under `conformance/bin/`
 
 The core server implementation lives in the AGPL repository: <https://github.com/axisrobo/eidovela>
 
@@ -49,7 +49,7 @@ The core server implementation lives in the AGPL repository: <https://github.com
 ## Versioning
 
 - Format: `major.minor.patch`
-- **`eidovela-open` and `eidovela` (core) share the same version tag** (e.g. `v0.3.0`).
+- **`eidovela-open` and `eidovela` (core) share the same version tag** (e.g. `v0.5.0`).
 - `eidovela-ee` (enterprise) may carry an independent version/tag.
 
 ## Quick start — local loop

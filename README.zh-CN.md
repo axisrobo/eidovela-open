@@ -33,7 +33,7 @@ Agent 系统面临通用 IdP 无法回答的身份问题：*「谁被允许在�
 - `sdk/go` —— Go SDK（HTTP 客户端、Ed25519 PoP 密钥生成、离线 JWT/JWKS 校验、RFC 8693 令牌交换 profile）
 - `cli/` —— 命令行工具
 - `examples/` —— 集成示例
-- `conformance/` —— 正向/负向的签发器与校验器测试夹具
+- `conformance/` —— 可执行的威胁场景测试夹具 + 驱动真实守护进程的 HTTP runner（`cmd/eidovela-conformance`）；附带预构建的核心守护进程（`conformance/bin/`）
 
 核心服务端实现位于 AGPL 仓库：<https://github.com/axisrobo/eidovela>
 
@@ -49,7 +49,7 @@ Agent 系统面临通用 IdP 无法回答的身份问题：*「谁被允许在�
 ## 版本规则
 
 - 格式：`major.minor.patch`
-- **`eidovela-open` 与 `eidovela`（core）共享同一版本标签**（如 `v0.3.0`）。
+- **`eidovela-open` 与 `eidovela`（core）共享同一版本标签**（如 `v0.5.0`）。
 - `eidovela-ee`（企业版）可拥有独立的版本/标签。
 
 ## 快速开始 — 本地环回
