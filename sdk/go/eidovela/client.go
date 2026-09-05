@@ -109,13 +109,30 @@ func (c *Client) CreateChallenge(ctx context.Context, agentID, workloadRegistrat
 // CompleteEnrollment binds a proof key to a workload only when its verified
 // workloadAttributes satisfy every selector in the workload registration.
 func (c *Client) CompleteEnrollment(ctx context.Context, challenge Challenge, privateKey ed25519.PrivateKey, runtime, workloadID, artifactDigest string, workloadAttributes map[string]string) (Instance, error) {
+	return c.CompleteEnrollmentWithAttestation(ctx, challenge, privateKey, runtime, workloadID, artifactDigest, workloadAttributes, nil)
+}
+
+// WorkloadAttestation carries optional platform evidence for attested
+// enrollment. Method is one of spiffe_svid, k8s_projected_sa or mtls;
+// CertificatePEM is the PEM leaf for spiffe_svid/mtls and Token is the raw
+// projected service-account JWT for k8s_projected_sa.
+type WorkloadAttestation struct {
+	Method         string `json:"method"`
+	CertificatePEM string `json:"certificate_pem,omitempty"`
+	Token          string `json:"token,omitempty"`
+}
+
+// CompleteEnrollmentWithAttestation is CompleteEnrollment with optional
+// transport-verified workload evidence. When attestation is supplied, the core
+// derives trusted selector attributes from the evidence instead of trusting
+// caller-supplied workloadAttributes.
+func (c *Client) CompleteEnrollmentWithAttestation(ctx context.Context, challenge Challenge, privateKey ed25519.PrivateKey, runtime, workloadID, artifactDigest string, workloadAttributes map[string]string, attestation *WorkloadAttestation) (Instance, error) {
 	pub := privateKey.Public().(ed25519.PublicKey)
 	proof, err := enrollmentProof(challenge, privateKey)
 	if err != nil {
 		return Instance{}, err
 	}
-	var instance Instance
-	err = c.post(ctx, "/v1/enrollments/complete", map[string]any{
+	body := map[string]any{
 		"enrollment_id":       challenge.ID,
 		"proof_jwt":           proof,
 		"public_key":          JWKFromPublic(pub, ""),
@@ -123,7 +140,12 @@ func (c *Client) CompleteEnrollment(ctx context.Context, challenge Challenge, pr
 		"workload_id":         workloadID,
 		"artifact_digest":     artifactDigest,
 		"workload_attributes": workloadAttributes,
-	}, &instance)
+	}
+	if attestation != nil {
+		body["attestation"] = attestation
+	}
+	var instance Instance
+	err = c.post(ctx, "/v1/enrollments/complete", body, &instance)
 	return instance, err
 }
 
