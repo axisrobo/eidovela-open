@@ -13,8 +13,8 @@ This repository uses **superpowers** as the agent harness (`.claude/settings.jso
 
 ## Conventions
 
-- Version format: `major.minor.patch` (see `VERSION`); current line is v0.5 Contract Foundation
-- Contract schemas are versioned under `contracts/<version>/`; v1alpha1 is frozen once published — additive changes only, breaking changes require a new contract version
+- Version format: `major.minor.patch` (see `VERSION`); current line is v1.0 Contract Foundation
+- Contract schemas are versioned under `contracts/<version>/`; `v1` is the stable line (frozen once published — additive changes only, breaking changes require a new contract line). `v1alpha1` is retained for earlier consumers
 - Nothing in this repo may depend on `eidovela` (AGPL) or `eidovela-ee`; the dependency direction is core/EE → open
 - Conformance fixtures (`conformance/fixtures`) must include positive and negative executable scenarios; verifier/issuer-internal semantics that are not observable over HTTP belong in `conformance/fixtures-internal` and are covered by core unit tests
 - The committed `conformance/bin/` daemon is the AGPL core binary, present so the runner can drive a live daemon without a core checkout

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eidovela.axisrobo.io/contracts/v1/agent-principal.json",
+  "title": "AgentPrincipal",
+  "type": "object",
+  "required": [
+    "tenant_id",
+    "agent_id",
+    "agent_class",
+    "authority_root_ref",
+    "lifecycle_epoch",
+    "issuer",
+    "audience",
+    "cnf"
+  ],
+  "properties": {
+    "tenant_id": { "type": "string" },
+    "agent_id": { "type": "string" },
+    "agent_class": { "type": "string", "enum": ["twin", "service", "ephemeral"] },
+    "blueprint_id": { "type": "string" },
+    "blueprint_version": { "type": "string" },
+    "instance_id": { "type": "string" },
+    "workload_id": { "type": "string" },
+    "authority_root_ref": { "type": "string" },
+    "sponsor_ref": { "type": "string" },
+    "lifecycle_epoch": { "type": "integer", "minimum": 0 },
+    "attestation_ref": { "type": "string" },
+    "cnf": { "type": "object" },
+    "issuer": { "type": "string" },
+    "audience": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "jti": { "type": "string" }
+  },
+  "additionalProperties": false
+}

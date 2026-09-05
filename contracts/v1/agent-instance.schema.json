@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eidovela.axisrobo.io/contracts/v1/agent-instance.json",
+  "title": "AgentInstance",
+  "type": "object",
+  "required": [
+    "instance_id",
+    "agent_id",
+    "tenant_id",
+    "runtime",
+    "status"
+  ],
+  "properties": {
+    "instance_id": { "type": "string" },
+    "agent_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "parent_instance_id": { "type": "string" },
+    "runtime": { "type": "string", "enum": ["praxovela", "rheovela", "kinetovela", "third_party"] },
+    "workload_id": { "type": "string" },
+    "artifact_digest": { "type": "string" },
+    "attestation_ref": { "type": "string" },
+    "lease_expires_at": { "type": "string", "format": "date-time" },
+    "status": { "type": "string", "enum": ["pending", "bound", "active", "expired", "terminated"] }
+  },
+  "additionalProperties": false
+}

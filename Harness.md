@@ -10,7 +10,7 @@ This project uses **superpowers** as the agent harness (`.claude/settings.json` 
 - **`eidovela-open` and `eidovela` (core) share the same version tag.** When either repository ships a change that warrants a bump, both are tagged with the same version (e.g. `v0.1.0`, `v0.2.0`, `v0.3.0`).
 - **`eidovela-ee` (enterprise) has an independent tag** and is not synchronized with core/open (e.g. `v0.3.0-ee.1`).
 - Version source of truth: `VERSION` in each repository.
-- Contract schemas are versioned under `contracts/<version>/`; v1alpha1 is frozen once published — additive changes only, breaking changes require a new contract version.
+- Contract schemas are versioned under `contracts/<version>/`; `v1` is the stable line (additive changes only, breaking changes require a new contract line). `v1alpha1` is retained for earlier consumers.
 
 ## Release workflow
 

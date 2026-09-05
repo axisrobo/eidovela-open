@@ -29,7 +29,7 @@ This repository (`eidovela-open`, Apache-2.0) is the public, developer-facing di
 
 Contents:
 
-- `contracts/` — versioned public contract schemas (v1alpha1)
+- `contracts/` — versioned public contract schemas (v1 stable; v1alpha1 retained)
 - `sdk/go` — Go SDK (HTTP client, Ed25519 PoP key generation, offline JWT/JWKS verification, RFC 8693 token-exchange profile)
 - `cli/` — command-line tool
 - `examples/` — integration examples

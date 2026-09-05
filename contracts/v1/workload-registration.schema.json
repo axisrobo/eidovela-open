@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eidovela.axisrobo.io/contracts/v1/workload-registration.json",
+  "title": "WorkloadRegistration",
+  "type": "object",
+  "required": [
+    "registration_id",
+    "tenant_id",
+    "platform",
+    "selector",
+    "trust_domain",
+    "allowed_proof_methods"
+  ],
+  "properties": {
+    "registration_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "platform": { "type": "string", "enum": ["kubernetes", "spiffe", "vm", "device"] },
+    "selector": {
+      "type": "object",
+      "description": "Platform-specific workload match criteria, e.g. namespace/serviceaccount for kubernetes, SPIFFE ID path for spiffe",
+      "additionalProperties": { "type": "string" }
+    },
+    "trust_domain": { "type": "string" },
+    "allowed_proof_methods": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["private_key_jwt", "mtls", "spiffe_svid", "k8s_projected_sa", "device_attestation"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "status": { "type": "string", "enum": ["active", "disabled"] }
+  },
+  "additionalProperties": false
+}

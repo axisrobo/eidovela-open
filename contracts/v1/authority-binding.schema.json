@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eidovela.axisrobo.io/contracts/v1/authority-binding.json",
+  "title": "AuthorityBinding",
+  "type": "object",
+  "required": [
+    "binding_id",
+    "agent_id",
+    "tenant_id",
+    "binding_type",
+    "root_ref",
+    "immutable",
+    "created_at"
+  ],
+  "properties": {
+    "binding_id": { "type": "string" },
+    "agent_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "binding_type": { "type": "string", "enum": ["human_master", "organization_root"] },
+    "root_ref": { "type": "string" },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "immutable": { "type": "boolean", "const": true },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

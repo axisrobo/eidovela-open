@@ -29,7 +29,7 @@ Agent 系统面临通用 IdP 无法回答的身份问题：*「谁被允许在�
 
 目录内容：
 
-- `contracts/` —— 版本化公共契约 schema（v1alpha1）
+- `contracts/` —— 版本化公共契约 schema（v1 稳定版；保留 v1alpha1）
 - `sdk/go` —— Go SDK（HTTP 客户端、Ed25519 PoP 密钥生成、离线 JWT/JWKS 校验、RFC 8693 令牌交换 profile）
 - `cli/` —— 命令行工具
 - `examples/` —— 集成示例
