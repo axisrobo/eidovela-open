@@ -156,7 +156,11 @@ func (c *Client) Token(ctx context.Context, agentID, instanceID, audience string
 }
 
 func tokenProof(agentID, instanceID string, privateKey ed25519.PrivateKey) (string, error) {
-	return sign(privateKey, map[string]any{"iss": agentID, "sub": instanceID, "aud": "eidovela:token", "exp": time.Now().Add(time.Minute).Unix()})
+	jti := make([]byte, 16)
+	if _, err := rand.Read(jti); err != nil {
+		return "", err
+	}
+	return sign(privateKey, map[string]any{"iss": agentID, "sub": instanceID, "aud": "eidovela:token", "jti": b64(jti), "exp": time.Now().Add(time.Minute).Unix()})
 }
 
 // Exchange requests an RFC 8693 attenuation token. The core only permits the
