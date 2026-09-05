@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Local CI for eidovela-open (Apache-2.0 public distribution).
+#   - gofmt / go build / go vet / go test (SDK, conformance runner)
+#   - Executable conformance scenarios against a live eidovelad daemon.
+#
+# The daemon is the AGPL core binary. Prefer the committed platform binary
+# under conformance/bin; if absent, build it from a local core checkout
+# (EIDOVELA_CORE_DIR) so no GitHub Action is required.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+# The parent directory may contain a go.work that does not list this module;
+# build this repository standalone.
+export GOWORK=off
+
+echo "== gofmt (advisory; repo is CRLF-normalized on Windows clones) =="
+out="$(gofmt -l ./conformance ./cmd ./sdk 2>/dev/null || true)"
+if [ -n "$out" ]; then
+  echo "note: gofmt would reformat (often line endings only):"
+  echo "$out"
+fi
+
+echo "== go build =="
+go build ./...
+echo "== go vet =="
+go vet ./conformance/... ./cmd/... ./sdk/...
+echo "== go test (unit) =="
+go test ./sdk/... -count=1
+
+echo "== conformance =="
+daemon="conformance/bin/eidovelad"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) daemon="conformance/bin/eidovelad.exe" ;;
+esac
+if [ ! -x "$daemon" ]; then
+  if [ -n "${EIDOVELA_CORE_DIR:-}" ]; then
+    echo "building daemon from $EIDOVELA_CORE_DIR"
+    ( cd "$EIDOVELA_CORE_DIR" && go build -o "$OLDPWD/$daemon" ./cmd/eidovelad )
+  else
+    echo "no daemon at $daemon; set EIDOVELA_CORE_DIR to a core checkout, or run"
+    echo "  EIDOVELA_CONFORMANCE_URL=http://127.0.0.1:8080 go test ./conformance/runner/"
+    exit 1
+  fi
+fi
+go test ./conformance/runner/ -run TestFixturesAgainstDaemon -v -count=1
+
+echo "== local CI OK =="
