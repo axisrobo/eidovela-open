@@ -16,6 +16,8 @@ Contents:
 
 Version format: `major.minor.patch`. Current: 0.1.0.
 
+Distribution governance: `STATUS.md`, `ROADMAP.md`, `COMPATIBILITY.md` and `contracts/README.md`.
+
 ## v0.5 local loop
 
 Start the core daemon, then run the public example:
