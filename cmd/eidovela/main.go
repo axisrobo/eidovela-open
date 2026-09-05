@@ -37,6 +37,11 @@ func main() {
 			usage()
 		}
 		result, err = client.Suspend(ctx, flag.Arg(1))
+	case "revoke":
+		if flag.NArg() != 2 {
+			usage()
+		}
+		result, err = client.Revoke(ctx, flag.Arg(1))
 	default:
 		usage()
 	}

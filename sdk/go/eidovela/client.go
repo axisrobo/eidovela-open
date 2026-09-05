@@ -161,6 +161,15 @@ func (c *Client) Suspend(ctx context.Context, agentID string) (Agent, error) {
 	return agent, err
 }
 
+// Revoke transitions an agent to the terminal revoked state. A revoked agent
+// cannot obtain tokens and its previously issued tokens fail authoritative
+// introspection immediately (revocation SLO).
+func (c *Client) Revoke(ctx context.Context, agentID string) (Agent, error) {
+	var agent Agent
+	err := c.post(ctx, "/v1/agents/"+agentID+"/revoke", nil, &agent)
+	return agent, err
+}
+
 func (c *Client) Token(ctx context.Context, agentID, instanceID, audience string, privateKey ed25519.PrivateKey) (TokenResponse, error) {
 	proof, err := tokenProof(agentID, instanceID, privateKey)
 	if err != nil {
