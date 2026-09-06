@@ -15,6 +15,12 @@ arbitrary request payloads.
 - `GET /v1/evidence?event_type=&since=<RFC3339>&limit=&offset=` — paginated
   redacted evidence (ordered by creation); `since` keeps events at/after the
   timestamp.
+
+Example list response shape (`/v1/agents`):
+
+```json
+{ "agents": [ { "agent_id": "agt_…", "agent_class": "service", "lifecycle_state": "active", "lifecycle_epoch": 3, "created_at": "…", "updated_at": "…" } ] }
+```
 - `GET /v1/ops/outbox` — read-only outbox health
   `{published,pending,leased,dead_lettered}`.
 - `GET /v1/ops/counters` — aggregate `{"evidence":{"<event_type>":count}}`.
