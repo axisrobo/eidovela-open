@@ -1,0 +1,25 @@
+{
+  "id": "N-F1-3",
+  "description": "A peer token for an audience outside the trust's allowed set is inactive",
+  "threat_ref": "F1",
+  "expectation": "deny",
+  "deny_reason": "audience not allowed by trust",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:peer-console",
+    "steps": [
+      {
+        "op": "register_federation_trust",
+        "federation": {
+          "issuer": "https://peer.example.test",
+          "allowed_audiences": ["eidovela:console"],
+          "claim_mappings": { "agent_id": "sub" },
+          "status": "active"
+        }
+      },
+      { "op": "issue_peer_token", "audience": "aegivela", "federation_issuer": "https://peer.example.test" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "deny" }
+    ]
+  }
+}

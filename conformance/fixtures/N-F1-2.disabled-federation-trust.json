@@ -1,0 +1,26 @@
+{
+  "id": "N-F1-2",
+  "description": "Disabling a federation trust immediately denies its tokens",
+  "threat_ref": "F1",
+  "expectation": "deny",
+  "deny_reason": "trust disabled",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:peer-console",
+    "steps": [
+      {
+        "op": "register_federation_trust",
+        "federation": {
+          "issuer": "https://peer.example.test",
+          "allowed_audiences": ["aegivela"],
+          "claim_mappings": { "agent_id": "sub" },
+          "status": "active"
+        }
+      },
+      { "op": "issue_peer_token", "audience": "aegivela", "federation_issuer": "https://peer.example.test" },
+      { "op": "disable_federation_trust", "federation_issuer": "https://peer.example.test", "expect": "ok" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "deny" }
+    ]
+  }
+}

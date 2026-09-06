@@ -6,7 +6,7 @@
   "type": "object",
   "required": ["id", "threat_ref", "expectation", "scenario"],
   "properties": {
-    "id": { "type": "string", "pattern": "^(P|N)-T[1-8]-[0-9]+$|^(P|N)-G[0-6]-[0-9]+$" },
+    "id": { "type": "string", "pattern": "^(P|N)-T[1-8]-[0-9]+$|^(P|N)-G[0-6]-[0-9]+$|^(P|N)-F[1-9]-[0-9]+$" },
     "description": { "type": "string" },
     "threat_ref": { "type": "string" },
     "expectation": { "type": "string", "enum": ["allow", "deny"] },
@@ -33,7 +33,7 @@
       "type": "object",
       "required": ["op"],
       "properties": {
-        "op": { "type": "string", "enum": ["register_workload", "complete_enrollment", "activate", "suspend", "revoke", "issue_token", "introspect", "exchange"] },
+        "op": { "type": "string", "enum": ["register_workload", "complete_enrollment", "activate", "suspend", "revoke", "issue_token", "introspect", "exchange", "register_federation_trust", "disable_federation_trust", "issue_peer_token"] },
         "workload_attributes": {
           "type": "object",
           "description": "Caller-supplied attributes for a private_key_jwt enrollment; must satisfy the workload selector.",
@@ -67,6 +67,21 @@
         "audience": { "type": "string" },
         "requested_audience": { "type": "string" },
         "present_key": { "type": "string", "description": "Which PoP key to present: main (default) or attacker" },
+        "federation": {
+          "type": "object",
+          "description": "Peer trust configuration for register_federation_trust. jwks_uri is injected by the runner.",
+          "properties": {
+            "issuer": { "type": "string" },
+            "allowed_audiences": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "claim_mappings": { "type": "object", "additionalProperties": { "type": "string" } },
+            "status": { "type": "string", "enum": ["active", "disabled"] }
+          },
+          "required": ["allowed_audiences"],
+          "additionalProperties": false
+        },
+        "federation_issuer": { "type": "string", "description": "Issuer for disable_federation_trust or to sign under for issue_peer_token (default https://peer.example.test)" },
+        "peer_agent": { "type": "string", "description": "sub claim for the peer-signed token (default agt_peer)" },
+        "expired": { "type": "boolean", "description": "Sign the peer token with an already-elapsed exp (default false)" },
         "expect": { "type": "string", "enum": ["ok", "deny"] },
         "deny_reason": { "type": "string" }
       },

@@ -1,0 +1,16 @@
+{
+  "id": "N-F1-1",
+  "description": "A token from an issuer with no trust record is inactive",
+  "threat_ref": "F1",
+  "expectation": "deny",
+  "deny_reason": "untrusted peer issuer",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:peer-console",
+    "steps": [
+      { "op": "issue_peer_token", "audience": "aegivela", "federation_issuer": "https://stranger.example.test" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "deny" }
+    ]
+  }
+}

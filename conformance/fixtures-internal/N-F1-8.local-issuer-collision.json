@@ -1,0 +1,18 @@
+{
+  "id": "N-F1-8",
+  "description": "A trust cannot point at the local authority (issuer collision rejected)",
+  "threat_ref": "F1",
+  "expectation": "deny",
+  "deny_reason": "issuer is the local authority",
+  "input": {
+    "operation": "create_federation_trust",
+    "trust": {
+      "issuer": "https://eidovela.example.test",
+      "jwks_uri": "https://eidovela.example.test/jwks.json",
+      "claim_mappings": { "agent_id": "sub" },
+      "allowed_audiences": ["aegivela"],
+      "status": "active"
+    },
+    "local_issuer": "https://eidovela.example.test"
+  }
+}

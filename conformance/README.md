@@ -8,7 +8,8 @@ assert `allow`/`deny` per the EIDOVELA contract.
 - `fixtures/` — runnable scenarios (`P-*` positive, `N-*` negative). Each file
   is an ordered scenario: register an agent + workload, complete enrollment
   (with synthesized private_key_jwt / spiffe_svid / k8s_projected_sa / mtls
-  evidence), drive lifecycle, issue/exchange tokens, and introspect.
+  evidence), drive lifecycle, issue/exchange tokens, introspect, and (for
+  federation) register peer trusts and introspect peer-signed tokens.
 - `fixtures/fixture.schema.json` — JSON schema for a scenario.
 - `fixtures-internal/` — verifier/issuer-internal semantics that are **not**
   observable through the public HTTP surface (unknown-issuer crafting, tenant
@@ -56,6 +57,12 @@ The daemon's attestation layer checks this evidence against the registered
 workload selector and trust domain; the runner does not fabricate registry
 state.
 
+For federation scenarios the runner also starts an in-process **peer issuer**
+that serves a loopback `jwks.json` and signs peer tokens. `register_federation_trust`
+points the trust's `jwks_uri` at that peer, so the daemon really fetches and
+verifies against a live JWKS. The peer requires the daemon to reach `127.0.0.1`,
+so remote daemons (`-server` to another host) cannot run `F*` fixtures.
+
 ## Coverage
 
 | Family | Covered | Notes |
@@ -65,3 +72,4 @@ state.
 | T4 lifecycle / revocation | N-T4-1/2 | stale epoch + revocation SLO after suspend/revoke |
 | T7 exchange | N-T7-1, P-T7-1 | audience widening denied; same-audience child active |
 | T8 audience binding | N-T8-1 | token inactive under a different introspect audience |
+| F1 federation | P-F1-1, N-F1-1..6 | trusted peer active; unknown issuer, disabled trust, non-allowed audience, expired token, unmapped agent claim, PoP mismatch all deny |

@@ -26,6 +26,22 @@ type Executor struct {
 	EnrollAudience string
 	// TokenAudience mirrors the core token-proof audience.
 	TokenAudience string
+	// peer is the in-memory federated issuer started on first use. It serves a
+	// loopback JWKS that the daemon fetches when introspecting peer tokens.
+	peer *PeerIssuer
+}
+
+// peerIssuer lazily starts the in-process federated peer used by federation
+// fixtures. Starting on demand keeps non-federation scenarios side-effect free.
+func (e *Executor) peerIssuer() (*PeerIssuer, error) {
+	if e.peer == nil {
+		peer, err := newPeerIssuer()
+		if err != nil {
+			return nil, err
+		}
+		e.peer = peer
+	}
+	return e.peer, nil
 }
 
 // Result captures the verdict for one fixture.
@@ -139,6 +155,12 @@ func (s *scenarioState) execStep(step Step) error {
 		return nil
 	case "exchange":
 		return s.outcome(wantDeny, s.exchange(step))
+	case "register_federation_trust":
+		return s.outcome(wantDeny, s.registerFederationTrust(step))
+	case "disable_federation_trust":
+		return s.outcome(wantDeny, s.disableFederationTrust(step))
+	case "issue_peer_token":
+		return s.outcome(wantDeny, s.issuePeerToken(step))
 	default:
 		return fmt.Errorf("unknown op %q", step.Op)
 	}
@@ -295,6 +317,77 @@ func (s *scenarioState) exchange(step Step) error {
 		return err
 	}
 	s.issuedToken = exchanged.Token
+	return nil
+}
+
+func (s *scenarioState) registerFederationTrust(step Step) error {
+	if step.Federation == nil {
+		return fmt.Errorf("register_federation_trust requires a federation config")
+	}
+	peer, err := s.ex.peerIssuer()
+	if err != nil {
+		return err
+	}
+	config := step.Federation
+	if config.Issuer == "" {
+		config.Issuer = "https://peer.example.test"
+	}
+	if config.Status == "" {
+		config.Status = "active"
+	}
+	var trust struct {
+		Status string `json:"status"`
+	}
+	body := map[string]any{
+		"issuer": config.Issuer, "jwks_uri": peer.JWKSURL(),
+		"claim_mappings": config.ClaimMappings, "allowed_audiences": config.AllowedAudiences,
+		"status": config.Status,
+	}
+	return s.post("/v1/federation/trusts", body, &trust)
+}
+
+func (s *scenarioState) disableFederationTrust(step Step) error {
+	issuer := step.FederationIssuer
+	if issuer == "" {
+		issuer = "https://peer.example.test"
+	}
+	return s.post("/v1/federation/trusts/disable", map[string]string{"issuer": issuer}, &struct{}{})
+}
+
+// issuePeerToken signs a token with the in-process peer's key and makes it the
+// scenario's introspect subject. The token is bound to the scenario's main PoP
+// key so the following introspect step can prove possession.
+func (s *scenarioState) issuePeerToken(step Step) error {
+	peer, err := s.ex.peerIssuer()
+	if err != nil {
+		return err
+	}
+	issuer := step.FederationIssuer
+	if issuer == "" {
+		issuer = "https://peer.example.test"
+	}
+	audience := step.Audience
+	if audience == "" {
+		audience = "aegivela"
+	}
+	agent := step.PeerAgent
+	if agent == "" {
+		agent = "agt_peer"
+	}
+	now := time.Now()
+	exp := now.Add(time.Hour)
+	if step.Expired {
+		exp = now.Add(-time.Minute)
+	}
+	token, err := peer.Sign("peer-1", map[string]any{
+		"iss": issuer, "sub": agent, "aud": audience,
+		"iat": now.Add(-10 * time.Minute).Unix(), "exp": exp.Unix(),
+		"jti": "peer_jti", "cnf": map[string]any{"jkt": thumbprint(s.mainPub)},
+	})
+	if err != nil {
+		return err
+	}
+	s.issuedToken = token
 	return nil
 }
 

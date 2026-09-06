@@ -41,9 +41,24 @@ type Step struct {
 	Audience           string            `json:"audience,omitempty"`
 	RequestedAudience  string            `json:"requested_audience,omitempty"`
 	PresentKey         string            `json:"present_key,omitempty"` // main | attacker
-	Expect             string            `json:"expect,omitempty"`      // ok (default) | deny
+	Federation         *FederationSpec   `json:"federation,omitempty"`
+	FederationIssuer   string            `json:"federation_issuer,omitempty"`
+	PeerAgent          string            `json:"peer_agent,omitempty"`
+	Expired            bool              `json:"expired,omitempty"`
+	Expect             string            `json:"expect,omitempty"` // ok (default) | deny
 	DenyReason         string            `json:"deny_reason,omitempty"`
 	Extra              interface{}       `json:"-"`
+}
+
+// FederationSpec configures a peer trust anchor on the daemon. JWKSURI is
+// injected by the runner from its local peer issuer; a fixture-supplied value is
+// ignored so every scenario exercises a real, reachable JWKS.
+type FederationSpec struct {
+	Issuer           string            `json:"issuer,omitempty"`
+	JWKSURI          string            `json:"jwks_uri,omitempty"`
+	AllowedAudiences []string          `json:"allowed_audiences"`
+	ClaimMappings    map[string]string `json:"claim_mappings"`
+	Status           string            `json:"status,omitempty"`
 }
 
 // Workload describes a workload registration to create on the daemon.

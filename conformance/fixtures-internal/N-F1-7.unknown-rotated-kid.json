@@ -1,0 +1,17 @@
+{
+  "id": "N-F1-7",
+  "description": "A peer token signed by a retired/unknown kid fails closed after JWKS rotation or fetch failure",
+  "threat_ref": "F1",
+  "expectation": "deny",
+  "deny_reason": "unknown signing key (bounded refresh exhausted)",
+  "input": {
+    "operation": "verify_peer_token",
+    "peer_trust": {
+      "issuer": "https://peer.example.test",
+      "jwks_uri": "https://peer.example.test/jwks.json",
+      "status": "active"
+    },
+    "token": { "kid": "peer-retired", "claims": { "aud": "aegivela" } },
+    "jwks": { "peer-active": "..." }
+  }
+}

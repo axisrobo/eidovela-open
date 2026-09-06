@@ -1,0 +1,25 @@
+{
+  "id": "N-F1-5",
+  "description": "A peer token whose agent claim does not resolve through the trust mapping is inactive",
+  "threat_ref": "F1",
+  "expectation": "deny",
+  "deny_reason": "agent claim mapping fails",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:peer-console",
+    "steps": [
+      {
+        "op": "register_federation_trust",
+        "federation": {
+          "issuer": "https://peer.example.test",
+          "allowed_audiences": ["aegivela"],
+          "claim_mappings": { "agent_id": "subject" },
+          "status": "active"
+        }
+      },
+      { "op": "issue_peer_token", "audience": "aegivela", "federation_issuer": "https://peer.example.test" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "deny" }
+    ]
+  }
+}

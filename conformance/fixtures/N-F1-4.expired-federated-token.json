@@ -1,0 +1,25 @@
+{
+  "id": "N-F1-4",
+  "description": "An expired peer-signed token is inactive",
+  "threat_ref": "F1",
+  "expectation": "deny",
+  "deny_reason": "token expired",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:peer-console",
+    "steps": [
+      {
+        "op": "register_federation_trust",
+        "federation": {
+          "issuer": "https://peer.example.test",
+          "allowed_audiences": ["aegivela"],
+          "claim_mappings": { "agent_id": "sub" },
+          "status": "active"
+        }
+      },
+      { "op": "issue_peer_token", "audience": "aegivela", "federation_issuer": "https://peer.example.test", "expired": true },
+      { "op": "introspect", "audience": "aegivela", "present_key": "main", "expect": "deny" }
+    ]
+  }
+}

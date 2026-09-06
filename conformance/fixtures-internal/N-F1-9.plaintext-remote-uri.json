@@ -1,0 +1,17 @@
+{
+  "id": "N-F1-9",
+  "description": "A plaintext non-loopback JWKS or issuer URI is rejected at trust-write and fetch time",
+  "threat_ref": "F1",
+  "expectation": "deny",
+  "deny_reason": "transport not allowed",
+  "input": {
+    "operation": "create_federation_trust",
+    "trust": {
+      "issuer": "http://peer.example.test",
+      "jwks_uri": "http://peer.example.test/jwks.json",
+      "claim_mappings": { "agent_id": "sub" },
+      "allowed_audiences": ["aegivela"],
+      "status": "active"
+    }
+  }
+}
