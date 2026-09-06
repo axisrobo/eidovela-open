@@ -542,6 +542,28 @@ func (c *Client) OutboxStatus(ctx context.Context) (OutboxStatus, error) {
 	return status, err
 }
 
+// KeyStatus is the read-only signing-key custody status (ADR-0005 console C4).
+type KeyStatus struct {
+	ActiveKID string   `json:"active_kid"`
+	Kids      []string `json:"kids"`
+	Overlap   bool     `json:"overlap"`
+}
+
+// KeyStatus reads the active signing kid and the keys valid now (grace overlap).
+func (c *Client) KeyStatus(ctx context.Context) (KeyStatus, error) {
+	var status KeyStatus
+	err := c.get(ctx, "/v1/ops/keys", &status)
+	return status, err
+}
+
+// RotateSigningKey rotates the active signing key with an overlapping grace
+// window (operator-initiated).
+func (c *Client) RotateSigningKey(ctx context.Context) (KeyStatus, error) {
+	var status KeyStatus
+	err := c.post(ctx, "/v1/ops/keys/rotate", nil, &status)
+	return status, err
+}
+
 // ListOutboxEvents reads the per-row outbox projection; status optionally
 // filters to one state (pending|leased|dead_lettered|published).
 func (c *Client) ListOutboxEvents(ctx context.Context, status string, limit, offset int) ([]OutboxEvent, error) {

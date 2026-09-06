@@ -31,6 +31,10 @@ Example list response shape (`/v1/agents`):
   the worker retries it. Published entries cannot be redriven (409); an unknown
   id is a 404. This is the only outbox mutation and never touches published rows.
 - `GET /v1/ops/counters` — aggregate `{"evidence":{"<event_type>":count}}`.
+- `GET /v1/ops/keys` — signing-key custody status `{active_kid,kids,overlap}`
+  (kids valid now, overlapping during grace; no private material).
+- `POST /v1/ops/keys/rotate` — rotate the active signing key with an overlapping
+  grace window (operator-initiated); returns the same custody shape.
 - `GET /v1/federation/trusts/status` — configured trusts merged with per-issuer
   introspection outcome telemetry `{issuer,status,success,deny}` (process-local).
 
