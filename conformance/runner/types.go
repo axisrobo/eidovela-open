@@ -34,20 +34,25 @@ type Scenario struct {
 
 // Step is one HTTP operation the runner performs.
 type Step struct {
-	Op                 string            `json:"op"`
-	Workload           *Workload         `json:"workload,omitempty"`
-	WorkloadAttributes map[string]string `json:"workload_attributes,omitempty"`
-	Attestation        *Attest           `json:"attestation,omitempty"`
-	Audience           string            `json:"audience,omitempty"`
-	RequestedAudience  string            `json:"requested_audience,omitempty"`
-	PresentKey         string            `json:"present_key,omitempty"` // main | attacker
-	Federation         *FederationSpec   `json:"federation,omitempty"`
-	FederationIssuer   string            `json:"federation_issuer,omitempty"`
-	PeerAgent          string            `json:"peer_agent,omitempty"`
-	Expired            bool              `json:"expired,omitempty"`
-	Expect             string            `json:"expect,omitempty"` // ok (default) | deny
-	DenyReason         string            `json:"deny_reason,omitempty"`
-	Extra              interface{}       `json:"-"`
+	Op                   string            `json:"op"`
+	Workload             *Workload         `json:"workload,omitempty"`
+	WorkloadAttributes   map[string]string `json:"workload_attributes,omitempty"`
+	Attestation          *Attest           `json:"attestation,omitempty"`
+	Audience             string            `json:"audience,omitempty"`
+	RequestedAudience    string            `json:"requested_audience,omitempty"`
+	PresentKey           string            `json:"present_key,omitempty"` // main | attacker
+	Federation           *FederationSpec   `json:"federation,omitempty"`
+	FederationIssuer     string            `json:"federation_issuer,omitempty"`
+	PeerAgent            string            `json:"peer_agent,omitempty"`
+	Expired              bool              `json:"expired,omitempty"`
+	Reason               string            `json:"reason,omitempty"`
+	BlueprintVersion     string            `json:"blueprint_version,omitempty"`
+	BlueprintPublisher   string            `json:"blueprint_publisher,omitempty"`
+	BlueprintClass       string            `json:"blueprint_class,omitempty"`
+	ExpectBlueprintStatus string           `json:"expect_blueprint_status,omitempty"`
+	Expect               string            `json:"expect,omitempty"` // ok (default) | deny
+	DenyReason           string            `json:"deny_reason,omitempty"`
+	Extra                interface{}       `json:"-"`
 }
 
 // FederationSpec configures a peer trust anchor on the daemon. JWKSURI is

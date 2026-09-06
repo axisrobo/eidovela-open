@@ -66,9 +66,11 @@ type Blueprint struct {
 	Metadata                  map[string]string `json:"metadata,omitempty"`
 	AllowedEnrollmentProfiles []string          `json:"allowed_enrollment_profiles,omitempty"`
 	Status                    string            `json:"status,omitempty"`
+	CreatedAt                 time.Time         `json:"created_at,omitempty"`
 }
 
-// RegisterBlueprint creates a draft blueprint for the scoped tenant.
+// RegisterBlueprint creates a draft blueprint for the scoped tenant. The server
+// always registers a draft; a caller-supplied status cannot pre-publish.
 func (c *Client) RegisterBlueprint(ctx context.Context, blueprint Blueprint) (Blueprint, error) {
 	var saved Blueprint
 	err := c.post(ctx, "/v1/blueprints", blueprint, &saved)
@@ -81,6 +83,49 @@ func (c *Client) PublishBlueprint(ctx context.Context, blueprintID string) (Blue
 	var saved Blueprint
 	err := c.post(ctx, "/v1/blueprints/"+blueprintID+"/publish", nil, &saved)
 	return saved, err
+}
+
+// DeprecateBlueprint retires a published blueprint so it no longer backs new
+// agent registration.
+func (c *Client) DeprecateBlueprint(ctx context.Context, blueprintID string) (Blueprint, error) {
+	var saved Blueprint
+	err := c.post(ctx, "/v1/blueprints/"+blueprintID+"/deprecate", nil, &saved)
+	return saved, err
+}
+
+// ListBlueprints reads the tenant's blueprint version rows (oldest first).
+// status/publisher/blueprint_id filters are optional.
+func (c *Client) ListBlueprints(ctx context.Context, status, publisher, blueprintID string, limit, offset int) ([]Blueprint, error) {
+	blueprints, _, err := c.listBlueprints(ctx, status, publisher, blueprintID, limit, offset, "")
+	return blueprints, err
+}
+
+// ListBlueprintsPage walks blueprint versions with an opaque cursor.
+func (c *Client) ListBlueprintsPage(ctx context.Context, status, publisher, blueprintID string, limit int, cursor string) ([]Blueprint, string, error) {
+	return c.listBlueprints(ctx, status, publisher, blueprintID, limit, 0, cursor)
+}
+
+func (c *Client) listBlueprints(ctx context.Context, status, publisher, blueprintID string, limit, offset int, cursor string) ([]Blueprint, string, error) {
+	var envelope struct {
+		Blueprints []Blueprint `json:"blueprints"`
+		NextCursor string      `json:"next_cursor"`
+	}
+	params := []string{}
+	if status != "" {
+		params = append(params, "status="+url.QueryEscape(status))
+	}
+	if publisher != "" {
+		params = append(params, "publisher="+url.QueryEscape(publisher))
+	}
+	if blueprintID != "" {
+		params = append(params, "blueprint_id="+url.QueryEscape(blueprintID))
+	}
+	params = append(params, pageQuery(false, "", limit, offset, cursor))
+	path := "/v1/blueprints?" + strings.Join(params, "&")
+	if err := c.get(ctx, path, &envelope); err != nil {
+		return nil, "", err
+	}
+	return envelope.Blueprints, envelope.NextCursor, nil
 }
 
 type WorkloadRegistrationRequest struct {
@@ -228,12 +273,34 @@ func (c *Client) Suspend(ctx context.Context, agentID string) (Agent, error) {
 	return agent, err
 }
 
+// SuspendWithReason suspends an agent and records an operator-supplied reason on
+// the lifecycle event (evidence correlation).
+func (c *Client) SuspendWithReason(ctx context.Context, agentID, reason string) (Agent, error) {
+	return c.suspendOrRevoke(ctx, agentID, "suspend", reason)
+}
+
 // Revoke transitions an agent to the terminal revoked state. A revoked agent
 // cannot obtain tokens and its previously issued tokens fail authoritative
 // introspection immediately (revocation SLO).
 func (c *Client) Revoke(ctx context.Context, agentID string) (Agent, error) {
 	var agent Agent
 	err := c.post(ctx, "/v1/agents/"+agentID+"/revoke", nil, &agent)
+	return agent, err
+}
+
+// RevokeWithReason revokes an agent and records an operator-supplied reason on
+// the lifecycle event (evidence correlation).
+func (c *Client) RevokeWithReason(ctx context.Context, agentID, reason string) (Agent, error) {
+	return c.suspendOrRevoke(ctx, agentID, "revoke", reason)
+}
+
+func (c *Client) suspendOrRevoke(ctx context.Context, agentID, op, reason string) (Agent, error) {
+	var agent Agent
+	var request any
+	if reason != "" {
+		request = map[string]string{"reason": reason}
+	}
+	err := c.post(ctx, "/v1/agents/"+agentID+"/"+op, request, &agent)
 	return agent, err
 }
 
@@ -341,6 +408,7 @@ type EvidenceRecord struct {
 	InstanceID     string    `json:"instance_id,omitempty"`
 	LifecycleEpoch uint64    `json:"lifecycle_epoch,omitempty"`
 	Outcome        string    `json:"outcome"`
+	Reason         string    `json:"reason,omitempty"`
 	PayloadHash    string    `json:"payload_hash,omitempty"`
 	CreatedAt      time.Time `json:"created_at"`
 }
@@ -362,29 +430,75 @@ type FederationTrustStatus struct {
 }
 
 func (c *Client) ListAgents(ctx context.Context, state string, limit, offset int) ([]AgentSummary, error) {
+	agents, _, err := c.listAgents(ctx, state, limit, offset, "")
+	return agents, err
+}
+
+// ListAgentsPage walks agents with an opaque cursor continuation. Pass the
+// returned next cursor (URL-escaped) as the cursor argument to fetch the next
+// page; an empty next cursor means the end of the list.
+func (c *Client) ListAgentsPage(ctx context.Context, state string, limit int, cursor string) ([]AgentSummary, string, error) {
+	return c.listAgents(ctx, state, limit, 0, cursor)
+}
+
+func (c *Client) listAgents(ctx context.Context, state string, limit, offset int, cursor string) ([]AgentSummary, string, error) {
 	var envelope struct {
-		Agents []AgentSummary `json:"agents"`
+		Agents     []AgentSummary `json:"agents"`
+		NextCursor string         `json:"next_cursor"`
 	}
-	path := "/v1/agents?" + pageQuery(state != "", "state="+url.QueryEscape(state), limit, offset)
-	err := c.get(ctx, path, &envelope)
-	return envelope.Agents, err
+	path := "/v1/agents?" + pageQuery(state != "", "state="+url.QueryEscape(state), limit, offset, cursor)
+	if err := c.get(ctx, path, &envelope); err != nil {
+		return nil, "", err
+	}
+	return envelope.Agents, envelope.NextCursor, nil
 }
 
 func (c *Client) ListAgentInstances(ctx context.Context, agentID string, limit, offset int) ([]Instance, error) {
+	instances, _, err := c.listAgentInstances(ctx, agentID, limit, offset, "")
+	return instances, err
+}
+
+// ListAgentInstancesPage walks a bound instance list with an opaque cursor.
+func (c *Client) ListAgentInstancesPage(ctx context.Context, agentID string, limit int, cursor string) ([]Instance, string, error) {
+	return c.listAgentInstances(ctx, agentID, limit, 0, cursor)
+}
+
+func (c *Client) listAgentInstances(ctx context.Context, agentID string, limit, offset int, cursor string) ([]Instance, string, error) {
 	var envelope struct {
-		Instances []Instance `json:"instances"`
+		Instances  []Instance `json:"instances"`
+		NextCursor string     `json:"next_cursor"`
 	}
-	err := c.get(ctx, "/v1/agents/"+agentID+"/instances?"+pageQuery(false, "", limit, offset), &envelope)
-	return envelope.Instances, err
+	path := "/v1/agents/" + agentID + "/instances?" + pageQuery(false, "", limit, offset, cursor)
+	if err := c.get(ctx, path, &envelope); err != nil {
+		return nil, "", err
+	}
+	return envelope.Instances, envelope.NextCursor, nil
 }
 
 func (c *Client) ListEvidence(ctx context.Context, eventType string, limit, offset int) ([]EvidenceRecord, error) {
-	return c.ListEvidenceSince(ctx, eventType, nil, limit, offset)
+	events, _, err := c.listEvidenceSince(ctx, eventType, nil, limit, offset, "")
+	return events, err
 }
 
 func (c *Client) ListEvidenceSince(ctx context.Context, eventType string, since *time.Time, limit, offset int) ([]EvidenceRecord, error) {
+	events, _, err := c.listEvidenceSince(ctx, eventType, since, limit, offset, "")
+	return events, err
+}
+
+// ListEvidencePage walks redacted evidence with an opaque cursor.
+func (c *Client) ListEvidencePage(ctx context.Context, eventType string, limit int, cursor string) ([]EvidenceRecord, string, error) {
+	return c.listEvidenceSince(ctx, eventType, nil, limit, 0, cursor)
+}
+
+// ListEvidenceSincePage walks evidence from a since lower bound with a cursor.
+func (c *Client) ListEvidenceSincePage(ctx context.Context, eventType string, since *time.Time, limit int, cursor string) ([]EvidenceRecord, string, error) {
+	return c.listEvidenceSince(ctx, eventType, since, limit, 0, cursor)
+}
+
+func (c *Client) listEvidenceSince(ctx context.Context, eventType string, since *time.Time, limit, offset int, cursor string) ([]EvidenceRecord, string, error) {
 	var envelope struct {
-		Evidence []EvidenceRecord `json:"evidence"`
+		Evidence   []EvidenceRecord `json:"evidence"`
+		NextCursor string           `json:"next_cursor"`
 	}
 	params := []string{}
 	if eventType != "" {
@@ -393,10 +507,12 @@ func (c *Client) ListEvidenceSince(ctx context.Context, eventType string, since 
 	if since != nil {
 		params = append(params, "since="+url.QueryEscape(since.UTC().Format(time.RFC3339)))
 	}
-	params = append(params, pageQuery(false, "", limit, offset))
+	params = append(params, pageQuery(false, "", limit, offset, cursor))
 	path := "/v1/evidence?" + strings.Join(params, "&")
-	err := c.get(ctx, path, &envelope)
-	return envelope.Evidence, err
+	if err := c.get(ctx, path, &envelope); err != nil {
+		return nil, "", err
+	}
+	return envelope.Evidence, envelope.NextCursor, nil
 }
 
 // AgentDetail reads a single tenant agent.
@@ -420,9 +536,10 @@ func (c *Client) FederationTrustStatuses(ctx context.Context) ([]FederationTrust
 	return envelope.Trusts, err
 }
 
-// pageQuery composes limit/offset query params; filter, when non-empty, is
-// already URL-escaped by the caller.
-func pageQuery(hasFilter bool, filter string, limit, offset int) string {
+// pageQuery composes limit/offset/cursor query params; filter, when non-empty,
+// is already URL-escaped by the caller. A non-empty cursor takes precedence over
+// an offset.
+func pageQuery(hasFilter bool, filter string, limit, offset int, cursor string) string {
 	params := []string{}
 	if hasFilter {
 		params = append(params, filter)
@@ -430,7 +547,9 @@ func pageQuery(hasFilter bool, filter string, limit, offset int) string {
 	if limit > 0 {
 		params = append(params, fmt.Sprintf("limit=%d", limit))
 	}
-	if offset > 0 {
+	if cursor != "" {
+		params = append(params, "cursor="+url.QueryEscape(cursor))
+	} else if offset > 0 {
 		params = append(params, fmt.Sprintf("offset=%d", offset))
 	}
 	return strings.Join(params, "&")

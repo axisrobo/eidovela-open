@@ -120,6 +120,37 @@ func TestBlueprintRegisterAndPublish(t *testing.T) {
 	}
 }
 
+func TestCursorPaginationMethods(t *testing.T) {
+	var cursorQuery string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/agents" {
+			http.NotFound(w, r)
+			return
+		}
+		cursorQuery = r.URL.Query().Get("cursor")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"agents":      []AgentSummary{{AgentID: "agt_1", AgentClass: "service", LifecycleState: "active"}},
+			"next_cursor": "next-token",
+		})
+	}))
+	defer server.Close()
+	client := NewClient(server.URL)
+	agents, next, err := client.ListAgentsPage(context.Background(), "", 10, "page-token")
+	if err != nil || len(agents) != 1 {
+		t.Fatalf("list agents page: %+v, %v", agents, err)
+	}
+	if next != "next-token" {
+		t.Fatalf("next cursor not surfaced, got %q", next)
+	}
+	if cursorQuery != "page-token" {
+		t.Fatalf("cursor must be sent, got %q", cursorQuery)
+	}
+	// Legacy offset callers do not send a cursor.
+	if _, err := client.ListAgents(context.Background(), "active", 10, 2); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestAgentDetailAndEvidenceSince(t *testing.T) {
 	var sinceQuery, detailPath string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

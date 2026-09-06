@@ -1,47 +1,55 @@
 #!/usr/bin/env bash
-# Local CI for eidovela-open (Apache-2.0 public distribution).
-#   - gofmt / go build / go vet / go test (SDK, conformance runner)
-#   - Executable conformance scenarios against a live eidovelad daemon.
+# Local CI for eidovela-open (Apache-2.0). Mirrors .github/workflows/ci.yml:
+#   - gofmt / go build / go vet
+#   - Go SDK unit tests
+#   - full conformance runner against a locally built core daemon
 #
-# The daemon is the AGPL core binary. Prefer the committed platform binary
-# under conformance/bin; if absent, build it from a local core checkout
-# (EIDOVELA_CORE_DIR) so no GitHub Action is required.
+# The conformance daemon is built from the sibling core checkout
+# (../eidovela/backend) when a platform binary is missing under conformance/bin,
+# so the fixtures always exercise current core behavior.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# The parent directory may contain a go.work that does not list this module;
-# build this repository standalone.
-export GOWORK=off
 
-echo "== gofmt (advisory; repo is CRLF-normalized on Windows clones) =="
-out="$(gofmt -l ./conformance ./cmd ./sdk 2>/dev/null || true)"
-if [ -n "$out" ]; then
-  echo "note: gofmt would reformat (often line endings only):"
-  echo "$out"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) DAEMON=conformance/bin/eidovelad.exe ;;
+  *) DAEMON=conformance/bin/eidovelad ;;
+esac
+
+echo "== gofmt =="
+bad=""
+gofmt_check() {
+  for dir in "$@"; do
+    while IFS= read -r f; do
+      # Normalize CRLF (Windows checkouts) before comparing so the gate matches
+      # a clean Linux CI clone.
+      if ! sed 's/\r$//' "$f" | gofmt -d >/dev/null 2>&1; then
+        bad="$bad $f"
+      fi
+    done < <(find "$dir" -name '*.go' -type f)
+  done
+}
+gofmt_check ./cmd ./sdk ./conformance/runner ./examples
+if [ -n "$bad" ]; then
+  echo "gofmt needed:"; echo "$bad"; exit 1
 fi
 
 echo "== go build =="
 go build ./...
 echo "== go vet =="
 go vet ./conformance/... ./cmd/... ./sdk/...
-echo "== go test (unit) =="
+echo "== go test (SDK) =="
 go test ./sdk/... -count=1
 
-echo "== conformance =="
-daemon="conformance/bin/eidovelad"
-case "$(uname -s)" in
-  MINGW*|MSYS*|CYGWIN*) daemon="conformance/bin/eidovelad.exe" ;;
-esac
-if [ ! -x "$daemon" ]; then
-  if [ -n "${EIDOVELA_CORE_DIR:-}" ]; then
-    echo "building daemon from $EIDOVELA_CORE_DIR"
-    ( cd "$EIDOVELA_CORE_DIR" && go build -o "$OLDPWD/$daemon" ./cmd/eidovelad )
-  else
-    echo "no daemon at $daemon; set EIDOVELA_CORE_DIR to a core checkout, or run"
-    echo "  EIDOVELA_CONFORMANCE_URL=http://127.0.0.1:8080 go test ./conformance/runner/"
-    exit 1
-  fi
+if [ ! -f "$DAEMON" ] && [ -d "../eidovela/backend" ]; then
+  echo "== build core daemon =="
+  ( cd "../eidovela/backend" && go build -o "../../eidovela-open/$DAEMON" ./cmd/eidovelad )
 fi
-go test ./conformance/runner/ -run TestFixturesAgainstDaemon -v -count=1
+if [ -f "$DAEMON" ]; then
+  echo "== conformance =="
+  go test ./conformance/runner/ -run TestFixturesAgainstDaemon -count=1
+else
+  echo "!! no $DAEMON and no sibling core checkout; skipping conformance"
+fi
 
 echo "== local CI OK =="

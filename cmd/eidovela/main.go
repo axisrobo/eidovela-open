@@ -41,15 +41,9 @@ func main() {
 		}
 		result, err = client.Activate(ctx, args[1])
 	case "suspend":
-		if len(args) != 2 {
-			usage()
-		}
-		result, err = client.Suspend(ctx, args[1])
+		result, err = lifecycleWithReason(ctx, client, args[1:], "suspend")
 	case "revoke":
-		if len(args) != 2 {
-			usage()
-		}
-		result, err = client.Revoke(ctx, args[1])
+		result, err = lifecycleWithReason(ctx, client, args[1:], "revoke")
 	case "federation-trust":
 		result, err = federationTrust(ctx, client, args[1:])
 	case "instance":
@@ -200,8 +194,8 @@ func evidenceSince(ctx context.Context, client *eidovela.Client, args []string) 
 	return client.ListEvidenceSince(ctx, *eventType, &since, 0, 0)
 }
 
-// blueprintOp manages agent blueprints: register a draft, then publish it so
-// agents may register against it.
+// blueprintOp manages agent blueprints: register a draft, publish it so agents
+// may register against it, deprecate a published version, and list versions.
 func blueprintOp(ctx context.Context, client *eidovela.Client, args []string) (any, error) {
 	if len(args) < 1 {
 		usage()
@@ -224,10 +218,51 @@ func blueprintOp(ctx context.Context, client *eidovela.Client, args []string) (a
 			usage()
 		}
 		return client.PublishBlueprint(ctx, args[1])
+	case "deprecate":
+		if len(args) != 2 {
+			usage()
+		}
+		return client.DeprecateBlueprint(ctx, args[1])
+	case "list":
+		fs := flag.NewFlagSet("blueprint list", flag.ExitOnError)
+		status := fs.String("status", "", "filter by status: draft | published | deprecated")
+		publisher := fs.String("publisher", "", "filter by publisher")
+		blueprintID := fs.String("blueprint-id", "", "filter by blueprint id (all versions)")
+		limit := fs.Int("limit", 0, "page size (0 = server default)")
+		if err := fs.Parse(args[1:]); err != nil {
+			return nil, err
+		}
+		if fs.NArg() != 0 {
+			usage()
+		}
+		return client.ListBlueprints(ctx, *status, *publisher, *blueprintID, *limit, 0)
 	default:
 		usage()
 		return nil, nil
 	}
+}
+
+// lifecycleWithReason runs suspend/revoke with an optional operator reason
+// recorded on the lifecycle event. Flags precede the agent id.
+func lifecycleWithReason(ctx context.Context, client *eidovela.Client, args []string, op string) (any, error) {
+	if len(args) == 1 {
+		if op == "suspend" {
+			return client.Suspend(ctx, args[0])
+		}
+		return client.Revoke(ctx, args[0])
+	}
+	fs := flag.NewFlagSet("eidovela "+op, flag.ExitOnError)
+	reason := fs.String("reason", "", "operator-supplied reason recorded on the lifecycle event")
+	if err := fs.Parse(args); err != nil {
+		return nil, err
+	}
+	if fs.NArg() != 1 {
+		usage()
+	}
+	if op == "suspend" {
+		return client.SuspendWithReason(ctx, fs.Arg(0), *reason)
+	}
+	return client.RevokeWithReason(ctx, fs.Arg(0), *reason)
 }
 
 func splitCSV(raw string) []string {
@@ -244,7 +279,7 @@ func splitCSV(raw string) []string {
 func usage() {
 	fmt.Fprintln(os.Stderr, "usage: eidovela [-server URL] register-service <organization-root>")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] register-twin <human-master>")
-	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] activate|suspend|revoke <agent-id>")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] activate <agent-id> | suspend|revoke [-reason R] <agent-id>")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] federation-trust list")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] federation-trust get|enable|disable <issuer>")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] federation-trust create <issuer> -jwks-uri URL -audiences a,b [-agent-claim sub] [-status active|disabled]")
@@ -252,7 +287,8 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance terminate <instance-id>")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] agents [state] | agent <id> | evidence [-type T] [-since RFC3339] | outbox | fed-status")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] blueprint register -class twin|service|ephemeral -version V [-publisher P]")
-	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] blueprint publish <blueprint-id>")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] blueprint publish|deprecate <blueprint-id>")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] blueprint list [-status draft|published|deprecated] [-publisher P] [-blueprint-id ID]")
 	fmt.Fprintln(os.Stderr, "PoP-bound agent flows (enroll/token/exchange/introspect) are SDK/local-loop examples.")
 	os.Exit(2)
 }

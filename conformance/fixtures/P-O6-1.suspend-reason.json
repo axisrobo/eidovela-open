@@ -1,0 +1,26 @@
+{
+  "id": "P-O6-1",
+  "description": "Suspend with an operator reason records the reason on the redacted lifecycle evidence",
+  "threat_ref": "O6",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:suspend-reason",
+    "steps": [
+      {
+        "op": "register_workload",
+        "workload": {
+          "platform": "kubernetes",
+          "selector": { "namespace": "default", "serviceaccount": "agent" },
+          "trust_domain": "example.test",
+          "allowed_proof_methods": ["private_key_jwt"]
+        }
+      },
+      { "op": "complete_enrollment", "attestation": { "method": "private_key_jwt" }, "workload_attributes": { "namespace": "default", "serviceaccount": "agent" } },
+      { "op": "activate" },
+      { "op": "suspend_with_reason", "reason": "compromised key suspected", "expect": "ok" },
+      { "op": "evidence_lifecycle_reason", "reason": "compromised key suspected", "expect": "ok" }
+    ]
+  }
+}

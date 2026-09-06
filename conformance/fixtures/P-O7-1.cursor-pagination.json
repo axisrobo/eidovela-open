@@ -1,0 +1,14 @@
+{
+  "id": "P-O7-1",
+  "description": "Opaque cursor continuation walks the full agent projection exactly once",
+  "threat_ref": "O7",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:cursor-page",
+    "steps": [
+      { "op": "cursor_page_agents", "expect": "ok" }
+    ]
+  }
+}

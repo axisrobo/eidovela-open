@@ -63,18 +63,23 @@ func NewExecutor(baseURL string) *Executor {
 
 // scenarioState carries one fixture's live state.
 type scenarioState struct {
-	ex           *Executor
-	ctx          context.Context
-	agentID      string
-	regID        string
-	challengeID  string
-	nonce        string
-	instanceID   string
-	mainPub      ed25519.PublicKey
-	mainPriv     ed25519.PrivateKey
-	attackerPub  ed25519.PublicKey
-	attackerPriv ed25519.PrivateKey
-	issuedToken  string
+	ex                      *Executor
+	ctx                     context.Context
+	agentID                 string
+	regID                   string
+	challengeID             string
+	nonce                   string
+	instanceID              string
+	agentClass              string
+	bindingType             string
+	authorityRootRef        string
+	managedBlueprintID      string
+	managedBlueprintVersion string
+	mainPub                 ed25519.PublicKey
+	mainPriv                ed25519.PrivateKey
+	attackerPub             ed25519.PublicKey
+	attackerPriv            ed25519.PrivateKey
+	issuedToken             string
 }
 
 // RunFixture executes a single fixture and returns its verdict. Each step
@@ -120,6 +125,9 @@ func (e *Executor) begin(ctx context.Context, fixture Fixture) (*scenarioState, 
 		return nil, fmt.Errorf("register agent: %w", err)
 	}
 	s.agentID = agent.AgentID
+	s.agentClass = fixture.Scenario.AgentClass
+	s.bindingType = fixture.Scenario.BindingType
+	s.authorityRootRef = fixture.Scenario.AuthorityRootRef
 	return s, nil
 }
 
@@ -179,8 +187,26 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.outboxStatus())
 	case "ops_bad_page":
 		return s.outcome(wantDeny, s.get("/v1/agents?limit=abc", &struct{}{}))
+	case "ops_bad_cursor":
+		return s.outcome(wantDeny, s.get("/v1/agents?cursor=not-base64!!", &struct{}{}))
 	case "ops_empty_page":
 		return s.outcome(wantDeny, s.emptyPage())
+	case "blueprint_register":
+		return s.outcome(wantDeny, s.blueprintRegister(step))
+	case "blueprint_publish":
+		return s.outcome(wantDeny, s.blueprintPublish())
+	case "blueprint_deprecate":
+		return s.outcome(wantDeny, s.blueprintDeprecate())
+	case "register_blueprint_agent":
+		return s.outcome(wantDeny, s.registerBlueprintAgent())
+	case "blueprint_list":
+		return s.outcome(wantDeny, s.blueprintList(step))
+	case "suspend_with_reason":
+		return s.outcome(wantDeny, s.suspendWithReason(step))
+	case "evidence_lifecycle_reason":
+		return s.outcome(wantDeny, s.evidenceLifecycleReason(step))
+	case "cursor_page_agents":
+		return s.outcome(wantDeny, s.cursorPageAgents())
 	default:
 		return fmt.Errorf("unknown op %q", step.Op)
 	}
@@ -198,6 +224,160 @@ func (s *scenarioState) emptyPage() error {
 	}
 	if len(envelope.Agents) != 0 {
 		return fmt.Errorf("expected empty page, got %d agents", len(envelope.Agents))
+	}
+	return nil
+}
+
+// blueprintRegister creates a draft blueprint for the scenario. A caller-supplied
+// published status must be ignored (registration always yields a draft).
+func (s *scenarioState) blueprintRegister(step Step) error {
+	if step.BlueprintVersion == "" || step.BlueprintClass == "" {
+		return fmt.Errorf("blueprint_register requires blueprint_version and blueprint_class")
+	}
+	publisher := step.BlueprintPublisher
+	if publisher == "" {
+		publisher = "axisrobo"
+	}
+	var saved struct {
+		BlueprintID string `json:"blueprint_id"`
+		Version     string `json:"version"`
+		Status      string `json:"status"`
+	}
+	payload := map[string]any{
+		"publisher": publisher, "version": step.BlueprintVersion,
+		"declared_class": step.BlueprintClass, "status": "published",
+	}
+	if err := s.post("/v1/blueprints", payload, &saved); err != nil {
+		return err
+	}
+	if saved.Status != "draft" {
+		return fmt.Errorf("blueprint registration must force draft, got %s", saved.Status)
+	}
+	s.managedBlueprintID = saved.BlueprintID
+	s.managedBlueprintVersion = saved.Version
+	return nil
+}
+
+func (s *scenarioState) blueprintPublish() error {
+	if s.managedBlueprintID == "" {
+		return fmt.Errorf("blueprint_publish requires blueprint_register first")
+	}
+	return s.post("/v1/blueprints/"+s.managedBlueprintID+"/publish", nil, &struct{}{})
+}
+
+func (s *scenarioState) blueprintDeprecate() error {
+	if s.managedBlueprintID == "" {
+		return fmt.Errorf("blueprint_deprecate requires blueprint_register first")
+	}
+	return s.post("/v1/blueprints/"+s.managedBlueprintID+"/deprecate", nil, &struct{}{})
+}
+
+// registerBlueprintAgent registers a fresh agent bound to the managed blueprint
+// (same class/binding as the scenario). A draft or deprecated blueprint cannot
+// back registration, so the step is expected to be denied in those states.
+func (s *scenarioState) registerBlueprintAgent() error {
+	if s.managedBlueprintID == "" {
+		return fmt.Errorf("register_blueprint_agent requires a published blueprint")
+	}
+	var agent struct {
+		AgentID string `json:"agent_id"`
+	}
+	payload := map[string]any{
+		"class": s.agentClass, "blueprint_id": s.managedBlueprintID,
+		"blueprint_version": s.managedBlueprintVersion,
+		"binding_type":      s.bindingType, "authority_root_ref": s.authorityRootRef,
+	}
+	return s.post("/v1/agents", payload, &agent)
+}
+
+// blueprintList verifies the managed blueprint's row is visible on the read
+// surface with the expected status.
+func (s *scenarioState) blueprintList(step Step) error {
+	if s.managedBlueprintID == "" {
+		return fmt.Errorf("blueprint_list requires blueprint_register first")
+	}
+	var envelope struct {
+		Blueprints []struct {
+			BlueprintID string `json:"blueprint_id"`
+			Version     string `json:"version"`
+			Status      string `json:"status"`
+		} `json:"blueprints"`
+	}
+	if err := s.get("/v1/blueprints?blueprint_id="+url.QueryEscape(s.managedBlueprintID), &envelope); err != nil {
+		return err
+	}
+	for _, bp := range envelope.Blueprints {
+		if bp.Version == s.managedBlueprintVersion {
+			if bp.Status != step.ExpectBlueprintStatus {
+				return fmt.Errorf("blueprint %s status = %s, want %s", bp.BlueprintID, bp.Status, step.ExpectBlueprintStatus)
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("managed blueprint %s v%s not in list", s.managedBlueprintID, s.managedBlueprintVersion)
+}
+
+// suspendWithReason suspends the scenario agent with an operator reason; the
+// reason is correlation data that must survive onto the lifecycle evidence.
+func (s *scenarioState) suspendWithReason(step Step) error {
+	return s.post(fmt.Sprintf("/v1/agents/%s/suspend", s.agentID), map[string]string{"reason": step.Reason}, &struct{}{})
+}
+
+// evidenceLifecycleReason asserts the suspended lifecycle event for this agent
+// carries the operator-supplied reason.
+func (s *scenarioState) evidenceLifecycleReason(step Step) error {
+	var envelope struct {
+		Evidence []struct {
+			Type   string `json:"event_type"`
+			Agent  string `json:"agent_id"`
+			Reason string `json:"reason"`
+		} `json:"evidence"`
+	}
+	if err := s.get("/v1/evidence", &envelope); err != nil {
+		return err
+	}
+	for _, event := range envelope.Evidence {
+		if event.Type == "identity.lifecycle.suspended" && event.Agent == s.agentID {
+			if event.Reason == step.Reason {
+				return nil
+			}
+			return fmt.Errorf("suspended event reason = %q, want %q", event.Reason, step.Reason)
+		}
+	}
+	return fmt.Errorf("suspended lifecycle evidence missing for agent %s", s.agentID)
+}
+
+// cursorPageAgents walks /v1/agents with opaque cursors and asserts the scenario
+// agent is visited exactly once with no repeats.
+func (s *scenarioState) cursorPageAgents() error {
+	seen := 0
+	cursor := ""
+	for {
+		var envelope struct {
+			Agents []struct {
+				AgentID string `json:"agent_id"`
+			} `json:"agents"`
+			NextCursor string `json:"next_cursor"`
+		}
+		query := "/v1/agents?limit=2"
+		if cursor != "" {
+			query += "&cursor=" + url.QueryEscape(cursor)
+		}
+		if err := s.get(query, &envelope); err != nil {
+			return err
+		}
+		for _, agent := range envelope.Agents {
+			if agent.AgentID == s.agentID {
+				seen++
+			}
+		}
+		if envelope.NextCursor == "" {
+			break
+		}
+		cursor = envelope.NextCursor
+	}
+	if seen != 1 {
+		return fmt.Errorf("cursor walk visited agent %d times, want exactly 1", seen)
 	}
 	return nil
 }

@@ -1,0 +1,18 @@
+{
+  "id": "N-B1-1",
+  "description": "A draft blueprint cannot back agent registration until published",
+  "threat_ref": "B1",
+  "expectation": "deny",
+  "deny_reason": "draft blueprint cannot back an agent",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:blueprints-draft",
+    "steps": [
+      { "op": "blueprint_register", "blueprint_version": "0.1.0", "blueprint_class": "service" },
+      { "op": "register_blueprint_agent", "expect": "deny" },
+      { "op": "blueprint_publish", "expect": "ok" },
+      { "op": "register_blueprint_agent", "expect": "ok" }
+    ]
+  }
+}

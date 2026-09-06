@@ -1,0 +1,21 @@
+{
+  "id": "P-B1-1",
+  "description": "Blueprint lifecycle over HTTP: register forces draft, publish backs a bound agent, deprecation is terminal and blocks new registrations",
+  "threat_ref": "B1",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:blueprints",
+    "steps": [
+      { "op": "blueprint_register", "blueprint_version": "1.0.0", "blueprint_class": "service" },
+      { "op": "blueprint_publish", "expect": "ok" },
+      { "op": "blueprint_list", "expect_blueprint_status": "published", "expect": "ok" },
+      { "op": "register_blueprint_agent", "expect": "ok" },
+      { "op": "blueprint_deprecate", "expect": "ok" },
+      { "op": "blueprint_list", "expect_blueprint_status": "deprecated", "expect": "ok" },
+      { "op": "register_blueprint_agent", "expect": "deny" },
+      { "op": "blueprint_deprecate", "expect": "deny" }
+    ]
+  }
+}

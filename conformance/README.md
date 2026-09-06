@@ -75,4 +75,7 @@ so remote daemons (`-server` to another host) cannot run `F*` fixtures.
 | T8 audience binding | N-T8-1 | token inactive under a different introspect audience |
 | F1 federation | P-F1-1, N-F1-1..6 | trusted peer active; unknown issuer, disabled trust, non-allowed audience, expired token, unmapped agent claim, PoP mismatch all deny |
 | I1 instance lease | P-I1-1, N-I1-1 | leased instance issues active tokens; terminated instance cannot lease again or issue |
+| B1 blueprint | P-B1-1, N-B1-1 | register forces draft; publish backs a bound agent; deprecation is terminal and blocks new registrations |
 | O1 ops projection | P-O1-1, N-O1-1, P-O2-1, P-O3-1, P-O4-1 | read projections expose the agent, its detail, evidence (incl. since filter) and outbox health; malformed pagination denied; out-of-range offset yields an empty page |
+| O6 lifecycle reason | P-O6-1 | suspend with an operator reason records it on the redacted lifecycle evidence |
+| O7 cursor pagination | P-O7-1, N-O2-1 | opaque cursor walks the full agent projection exactly once; a malformed cursor is denied |

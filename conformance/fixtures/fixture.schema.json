@@ -6,7 +6,7 @@
   "type": "object",
   "required": ["id", "threat_ref", "expectation", "scenario"],
   "properties": {
-    "id": { "type": "string", "pattern": "^(P|N)-T[1-8]-[0-9]+$|^(P|N)-G[0-6]-[0-9]+$|^(P|N)-F[1-9]-[0-9]+$|^(P|N)-I[0-9]-[0-9]+$|^(P|N)-O[0-9]-[0-9]+$" },
+    "id": { "type": "string", "pattern": "^(P|N)-T[1-8]-[0-9]+$|^(P|N)-G[0-6]-[0-9]+$|^(P|N)-F[1-9]-[0-9]+$|^(P|N)-I[0-9]-[0-9]+$|^(P|N)-O[0-9]-[0-9]+$|^(P|N)-B[0-9]-[0-9]+$" },
     "description": { "type": "string" },
     "threat_ref": { "type": "string" },
     "expectation": { "type": "string", "enum": ["allow", "deny"] },
@@ -33,7 +33,7 @@
       "type": "object",
       "required": ["op"],
       "properties": {
-        "op": { "type": "string", "enum": ["register_workload", "complete_enrollment", "activate", "suspend", "revoke", "issue_token", "introspect", "exchange", "register_federation_trust", "disable_federation_trust", "issue_peer_token", "instance_lease", "instance_terminate", "list_agents", "agent_detail", "evidence_events", "evidence_since", "outbox_status", "ops_bad_page", "ops_empty_page", "instances_lease_projection"] },
+        "op": { "type": "string", "enum": ["register_workload", "complete_enrollment", "activate", "suspend", "revoke", "issue_token", "introspect", "exchange", "register_federation_trust", "disable_federation_trust", "issue_peer_token", "instance_lease", "instance_terminate", "list_agents", "agent_detail", "evidence_events", "evidence_since", "outbox_status", "ops_bad_page", "ops_bad_cursor", "ops_empty_page", "instances_lease_projection", "blueprint_register", "blueprint_publish", "blueprint_deprecate", "register_blueprint_agent", "blueprint_list", "suspend_with_reason", "evidence_lifecycle_reason", "cursor_page_agents"] },
         "workload_attributes": {
           "type": "object",
           "description": "Caller-supplied attributes for a private_key_jwt enrollment; must satisfy the workload selector.",
@@ -82,6 +82,11 @@
         "federation_issuer": { "type": "string", "description": "Issuer for disable_federation_trust or to sign under for issue_peer_token (default https://peer.example.test)" },
         "peer_agent": { "type": "string", "description": "sub claim for the peer-signed token (default agt_peer)" },
         "expired": { "type": "boolean", "description": "Sign the peer token with an already-elapsed exp (default false)" },
+        "reason": { "type": "string", "description": "Operator reason recorded on a suspend/revoke lifecycle event" },
+        "blueprint_version": { "type": "string", "description": "Version for blueprint_register" },
+        "blueprint_publisher": { "type": "string", "description": "Publisher for blueprint_register (default axisrobo)" },
+        "blueprint_class": { "type": "string", "description": "Declared class for blueprint_register (twin|service|ephemeral)" },
+        "expect_blueprint_status": { "type": "string", "description": "Status blueprint_list must observe for the managed blueprint version (draft|published|deprecated)" },
         "expect": { "type": "string", "enum": ["ok", "deny"] },
         "deny_reason": { "type": "string" }
       },

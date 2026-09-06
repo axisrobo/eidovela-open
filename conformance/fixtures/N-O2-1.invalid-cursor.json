@@ -1,0 +1,15 @@
+{
+  "id": "N-O2-1",
+  "description": "A malformed opaque cursor is rejected with a client error",
+  "threat_ref": "O2",
+  "expectation": "deny",
+  "deny_reason": "invalid cursor",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:invalid-cursor",
+    "steps": [
+      { "op": "ops_bad_cursor", "expect": "deny" }
+    ]
+  }
+}

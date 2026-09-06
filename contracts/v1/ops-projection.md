@@ -6,15 +6,15 @@ arbitrary request payloads.
 
 ## Endpoints
 
-- `GET /v1/agents?state=<state>&limit=&offset=` — list tenant agents; `state`
-  optional. Response `{"agents":[...]}`.
+- `GET /v1/agents?state=<state>&limit=&cursor=&offset=` — list tenant agents;
+  `state` optional. Response `{"agents":[...], "next_cursor":<opaque>?}`.
 - `GET /v1/agents/{id}` — single agent detail (`Agent`/`AgentSummary` shape).
-- `GET /v1/agents/{id}/instances?limit=&offset=` — instances bound to an agent
-  (including `lease_expires_at` and a read-only derived `lease_expired` when the
-  lease is set and lapsed).
-- `GET /v1/evidence?event_type=&since=<RFC3339>&limit=&offset=` — paginated
-  redacted evidence (ordered by creation); `since` keeps events at/after the
-  timestamp.
+- `GET /v1/agents/{id}/instances?limit=&cursor=&offset=` — instances bound to an
+  agent (including `lease_expires_at` and a read-only derived `lease_expired`
+  when the lease is set and lapsed).
+- `GET /v1/evidence?event_type=&since=<RFC3339>&limit=&cursor=&offset=` —
+  paginated redacted evidence (ordered by creation); `since` keeps events at/after
+  the timestamp.
 
 Example list response shape (`/v1/agents`):
 
@@ -32,12 +32,17 @@ Example list response shape (`/v1/agents`):
 - `limit` defaults to 100, capped at 1000; `offset` starts at 0. Both are
   tenant-scoped and server-validated. An explicit `limit=0` is honored (empty
   page); omit `limit` for the default.
+- When more items follow a page, list responses return an opaque `next_cursor`;
+  pass it back URL-encoded as `cursor=` to fetch the next page. `cursor` takes
+  precedence over `offset` when both are present, and a malformed cursor is a
+  client error (400). The token is tenant-scoped and carries no filter state, so
+  filters (`state`, `event_type`, `since`) must be re-supplied on every page.
 - List responses use stable envelope keys: `agents`, `instances`, `evidence`,
   `trusts`; detail (`GET /v1/agents/{id}`) returns the single object without an
   envelope.
 - Filters (`state`, `event_type`, `since`) are applied server side before paging.
-- Offset pagination is the v1 choice; an opaque cursor (e.g. `since` on
-  evidence) is a documented follow-on and would be additive if adopted.
+- Offset pagination remains supported on the v1 line; the opaque `cursor` is the
+  additive continuation form and `next_cursor` is additive to list responses.
 - Read endpoints never bypass audit: they read the same redacted projection the
   lifecycle stream and outbox expose, never raw tables with sensitive payloads.
 
