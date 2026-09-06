@@ -10,7 +10,8 @@ arbitrary request payloads.
   optional. Response `{"agents":[...]}`.
 - `GET /v1/agents/{id}` — single agent detail (`Agent`/`AgentSummary` shape).
 - `GET /v1/agents/{id}/instances?limit=&offset=` — instances bound to an agent
-  (including `lease_expires_at` and derived status).
+  (including `lease_expires_at` and a read-only derived `lease_expired` when the
+  lease is set and lapsed).
 - `GET /v1/evidence?event_type=&since=<RFC3339>&limit=&offset=` — paginated
   redacted evidence (ordered by creation); `since` keeps events at/after the
   timestamp.

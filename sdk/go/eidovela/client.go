@@ -81,6 +81,7 @@ type Instance struct {
 	WorkloadID     string    `json:"workload_id"`
 	Status         string    `json:"status"`
 	LeaseExpiresAt time.Time `json:"lease_expires_at,omitempty"`
+	LeaseExpired   bool      `json:"lease_expired,omitempty"`
 }
 
 type TokenResponse struct {
