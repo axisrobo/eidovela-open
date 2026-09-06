@@ -23,6 +23,8 @@ arbitrary request payloads.
 - `limit` defaults to 100, capped at 1000; `offset` starts at 0. Both are
   tenant-scoped and server-validated.
 - Filters (`state`, `event_type`) are applied server side before paging.
+- Offset pagination is the v1 choice; an opaque cursor (e.g. `since` on
+  evidence) is a documented follow-on and would be additive if adopted.
 - Read endpoints never bypass audit: they read the same redacted projection the
   lifecycle stream and outbox expose, never raw tables with sensitive payloads.
 
