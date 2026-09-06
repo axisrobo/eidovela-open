@@ -161,6 +161,10 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.disableFederationTrust(step))
 	case "issue_peer_token":
 		return s.outcome(wantDeny, s.issuePeerToken(step))
+	case "instance_lease":
+		return s.outcome(wantDeny, s.instanceLease(step))
+	case "instance_terminate":
+		return s.outcome(wantDeny, s.post(fmt.Sprintf("/v1/instances/%s/terminate", s.instanceID), nil, &struct{}{}))
 	default:
 		return fmt.Errorf("unknown op %q", step.Op)
 	}
@@ -389,6 +393,20 @@ func (s *scenarioState) issuePeerToken(step Step) error {
 	}
 	s.issuedToken = token
 	return nil
+}
+
+// instanceLease binds the enrolled instance to a one-hour lease. The daemon's
+// lease maximum (default 24h) is not exceeded, and issuing after the step must
+// succeed because the lease is in the future.
+func (s *scenarioState) instanceLease(step Step) error {
+	if s.instanceID == "" {
+		return fmt.Errorf("instance_lease requires completed enrollment")
+	}
+	var instance struct {
+		Status string `json:"status"`
+	}
+	body := map[string]any{"lease_expires_at": time.Now().Add(time.Hour)}
+	return s.post("/v1/instances/"+s.instanceID+"/lease", body, &instance)
 }
 
 func (s *scenarioState) buildAttestation(att *Attest, pub ed25519.PublicKey, priv ed25519.PrivateKey) (map[string]any, error) {

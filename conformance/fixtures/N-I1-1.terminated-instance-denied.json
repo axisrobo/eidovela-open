@@ -1,0 +1,28 @@
+{
+  "id": "N-I1-1",
+  "description": "A terminated instance cannot be leased again or issue tokens",
+  "threat_ref": "I1",
+  "expectation": "deny",
+  "deny_reason": "instance terminated",
+  "scenario": {
+    "agent_class": "twin",
+    "binding_type": "human_master",
+    "authority_root_ref": "user:alice@example.test",
+    "steps": [
+      {
+        "op": "register_workload",
+        "workload": {
+          "platform": "kubernetes",
+          "selector": { "namespace": "prod", "serviceaccount": "agent" },
+          "trust_domain": "example.test",
+          "allowed_proof_methods": ["private_key_jwt"]
+        }
+      },
+      { "op": "complete_enrollment", "attestation": { "method": "private_key_jwt" }, "workload_attributes": { "namespace": "prod", "serviceaccount": "agent" } },
+      { "op": "activate" },
+      { "op": "instance_terminate", "expect": "ok" },
+      { "op": "instance_lease", "expect": "deny" },
+      { "op": "issue_token", "audience": "aegivela", "present_key": "main", "expect": "deny" }
+    ]
+  }
+}
