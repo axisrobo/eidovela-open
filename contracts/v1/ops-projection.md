@@ -23,6 +23,13 @@ Example list response shape (`/v1/agents`):
 ```
 - `GET /v1/ops/outbox` — read-only outbox health
   `{published,pending,leased,dead_lettered}`.
+- `GET /v1/ops/outbox/events?status=<pending|leased|dead_lettered|published>&limit=&cursor=&offset=`
+  — per-row outbox projection (id, topic, agent/epoch, `state`, attempts, lease
+  and dead-letter timestamps) for DLQ review; response
+  `{"events":[...], "next_cursor":<opaque>?}`.
+- `POST /v1/ops/outbox/events/{id}/redrive` — requeue a dead-lettered entry so
+  the worker retries it. Published entries cannot be redriven (409); an unknown
+  id is a 404. This is the only outbox mutation and never touches published rows.
 - `GET /v1/ops/counters` — aggregate `{"evidence":{"<event_type>":count}}`.
 - `GET /v1/federation/trusts/status` — configured trusts merged with per-issuer
   introspection outcome telemetry `{issuer,status,success,deny}` (process-local).

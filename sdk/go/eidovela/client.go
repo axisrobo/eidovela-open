@@ -420,6 +420,20 @@ type OutboxStatus struct {
 	DeadLettered int `json:"dead_lettered"`
 }
 
+// OutboxEvent is a per-row outbox projection entry (DLQ review).
+type OutboxEvent struct {
+	EventID        string    `json:"event_id"`
+	Topic          string    `json:"topic"`
+	TenantID       string    `json:"tenant_id"`
+	AgentID        string    `json:"agent_id,omitempty"`
+	Epoch          uint64    `json:"epoch,omitempty"`
+	State          string    `json:"state"`
+	Attempts       uint32    `json:"attempts"`
+	LeaseUntil     time.Time `json:"lease_until,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	DeadLetteredAt time.Time `json:"dead_lettered_at,omitempty"`
+}
+
 // FederationTrustStatus is a trust merged with per-issuer introspection
 // outcome telemetry (process-local counters).
 type FederationTrustStatus struct {
@@ -526,6 +540,40 @@ func (c *Client) OutboxStatus(ctx context.Context) (OutboxStatus, error) {
 	var status OutboxStatus
 	err := c.get(ctx, "/v1/ops/outbox", &status)
 	return status, err
+}
+
+// ListOutboxEvents reads the per-row outbox projection; status optionally
+// filters to one state (pending|leased|dead_lettered|published).
+func (c *Client) ListOutboxEvents(ctx context.Context, status string, limit, offset int) ([]OutboxEvent, error) {
+	events, _, err := c.listOutboxEvents(ctx, status, limit, offset, "")
+	return events, err
+}
+
+// ListOutboxEventsPage walks the outbox projection with an opaque cursor.
+func (c *Client) ListOutboxEventsPage(ctx context.Context, status string, limit int, cursor string) ([]OutboxEvent, string, error) {
+	return c.listOutboxEvents(ctx, status, limit, 0, cursor)
+}
+
+func (c *Client) listOutboxEvents(ctx context.Context, status string, limit, offset int, cursor string) ([]OutboxEvent, string, error) {
+	var envelope struct {
+		Events     []OutboxEvent `json:"events"`
+		NextCursor string        `json:"next_cursor"`
+	}
+	params := []string{}
+	if status != "" {
+		params = append(params, "status="+url.QueryEscape(status))
+	}
+	params = append(params, pageQuery(false, "", limit, offset, cursor))
+	path := "/v1/ops/outbox/events?" + strings.Join(params, "&")
+	if err := c.get(ctx, path, &envelope); err != nil {
+		return nil, "", err
+	}
+	return envelope.Events, envelope.NextCursor, nil
+}
+
+// RedriveOutboxEvent requeues a dead-lettered outbox entry for delivery.
+func (c *Client) RedriveOutboxEvent(ctx context.Context, eventID string) error {
+	return c.post(ctx, "/v1/ops/outbox/events/"+eventID+"/redrive", nil, &struct{}{})
 }
 
 func (c *Client) FederationTrustStatuses(ctx context.Context) ([]FederationTrustStatus, error) {

@@ -185,6 +185,8 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.instancesLeaseProjection())
 	case "outbox_status":
 		return s.outcome(wantDeny, s.outboxStatus())
+	case "outbox_events":
+		return s.outcome(wantDeny, s.outboxEventsList())
 	case "ops_bad_page":
 		return s.outcome(wantDeny, s.get("/v1/agents?limit=abc", &struct{}{}))
 	case "ops_bad_cursor":
@@ -481,6 +483,31 @@ func (s *scenarioState) outboxStatus() error {
 		Pending int `json:"pending"`
 	}
 	return s.get("/v1/ops/outbox", &stats)
+}
+
+// outboxEventsList asserts the per-row outbox projection exposes the scenario's
+// registration entry as pending (DLQ review read surface).
+func (s *scenarioState) outboxEventsList() error {
+	var envelope struct {
+		Events []struct {
+			EventID string `json:"event_id"`
+			Topic   string `json:"topic"`
+			Agent   string `json:"agent_id"`
+			State   string `json:"state"`
+		} `json:"events"`
+	}
+	if err := s.get("/v1/ops/outbox/events", &envelope); err != nil {
+		return err
+	}
+	for _, event := range envelope.Events {
+		if event.Topic == "identity.agent.registered" && event.Agent == s.agentID {
+			if event.State != "pending" {
+				return fmt.Errorf("registration outbox row state = %s, want pending", event.State)
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("registration outbox row missing for agent %s", s.agentID)
 }
 
 // outcome reports nil when the step met its expected outcome: an operation that

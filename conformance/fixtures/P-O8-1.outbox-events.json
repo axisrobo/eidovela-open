@@ -1,0 +1,14 @@
+{
+  "id": "P-O8-1",
+  "description": "The per-row outbox projection exposes a registration entry as pending for DLQ review",
+  "threat_ref": "O8",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:outbox-rows",
+    "steps": [
+      { "op": "outbox_events", "expect": "ok" }
+    ]
+  }
+}

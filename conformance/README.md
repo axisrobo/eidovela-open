@@ -79,3 +79,4 @@ so remote daemons (`-server` to another host) cannot run `F*` fixtures.
 | O1 ops projection | P-O1-1, N-O1-1, P-O2-1, P-O3-1, P-O4-1 | read projections expose the agent, its detail, evidence (incl. since filter) and outbox health; malformed pagination denied; out-of-range offset yields an empty page |
 | O6 lifecycle reason | P-O6-1 | suspend with an operator reason records it on the redacted lifecycle evidence |
 | O7 cursor pagination | P-O7-1, N-O2-1 | opaque cursor walks the full agent projection exactly once; a malformed cursor is denied |
+| O8 outbox rows | P-O8-1 | the per-row outbox projection exposes a registration entry as pending for DLQ review |
