@@ -169,6 +169,10 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.listAgents())
 	case "evidence_events":
 		return s.outcome(wantDeny, s.evidenceEvents())
+	case "agent_detail":
+		return s.outcome(wantDeny, s.agentDetail())
+	case "evidence_since":
+		return s.outcome(wantDeny, s.evidenceSince())
 	case "outbox_status":
 		return s.outcome(wantDeny, s.outboxStatus())
 	case "ops_bad_page":
@@ -228,6 +232,38 @@ func (s *scenarioState) evidenceEvents() error {
 		}
 	}
 	return fmt.Errorf("registration evidence not present in /v1/evidence projection")
+}
+
+func (s *scenarioState) agentDetail() error {
+	var agent struct {
+		AgentID string `json:"agent_id"`
+		State   string `json:"lifecycle_state"`
+	}
+	if err := s.get("/v1/agents/"+s.agentID, &agent); err != nil {
+		return err
+	}
+	if agent.AgentID != s.agentID || agent.State != "registered" {
+		return fmt.Errorf("agent detail mismatch: %+v", agent)
+	}
+	return nil
+}
+
+func (s *scenarioState) evidenceSince() error {
+	since := time.Now().Add(-time.Hour).UTC().Format(time.RFC3339)
+	var envelope struct {
+		Evidence []struct {
+			Type string `json:"event_type"`
+		} `json:"evidence"`
+	}
+	if err := s.get("/v1/evidence?since="+url.QueryEscape(since), &envelope); err != nil {
+		return err
+	}
+	for _, event := range envelope.Evidence {
+		if event.Type == "identity.agent.registered" {
+			return nil
+		}
+	}
+	return fmt.Errorf("registration evidence missing in since-filtered projection")
 }
 
 func (s *scenarioState) outboxStatus() error {

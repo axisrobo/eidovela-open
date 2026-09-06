@@ -352,12 +352,31 @@ func (c *Client) ListAgentInstances(ctx context.Context, agentID string, limit, 
 }
 
 func (c *Client) ListEvidence(ctx context.Context, eventType string, limit, offset int) ([]EvidenceRecord, error) {
+	return c.ListEvidenceSince(ctx, eventType, nil, limit, offset)
+}
+
+func (c *Client) ListEvidenceSince(ctx context.Context, eventType string, since *time.Time, limit, offset int) ([]EvidenceRecord, error) {
 	var envelope struct {
 		Evidence []EvidenceRecord `json:"evidence"`
 	}
-	path := "/v1/evidence?" + pageQuery(eventType != "", "event_type="+url.QueryEscape(eventType), limit, offset)
+	params := []string{}
+	if eventType != "" {
+		params = append(params, "event_type="+url.QueryEscape(eventType))
+	}
+	if since != nil {
+		params = append(params, "since="+url.QueryEscape(since.UTC().Format(time.RFC3339)))
+	}
+	params = append(params, pageQuery(false, "", limit, offset))
+	path := "/v1/evidence?" + strings.Join(params, "&")
 	err := c.get(ctx, path, &envelope)
 	return envelope.Evidence, err
+}
+
+// AgentDetail reads a single tenant agent.
+func (c *Client) AgentDetail(ctx context.Context, agentID string) (AgentSummary, error) {
+	var agent AgentSummary
+	err := c.get(ctx, "/v1/agents/"+agentID, &agent)
+	return agent, err
 }
 
 func (c *Client) OutboxStatus(ctx context.Context) (OutboxStatus, error) {

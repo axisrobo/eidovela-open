@@ -8,10 +8,12 @@ arbitrary request payloads.
 
 - `GET /v1/agents?state=<state>&limit=&offset=` — list tenant agents; `state`
   optional. Response `{"agents":[...]}`.
+- `GET /v1/agents/{id}` — single agent detail (`Agent`/`AgentSummary` shape).
 - `GET /v1/agents/{id}/instances?limit=&offset=` — instances bound to an agent
   (including `lease_expires_at` and derived status).
-- `GET /v1/evidence?event_type=&limit=&offset=` — paginated redacted evidence
-  (ordered by creation).
+- `GET /v1/evidence?event_type=&since=<RFC3339>&limit=&offset=` — paginated
+  redacted evidence (ordered by creation); `since` keeps events at/after the
+  timestamp.
 - `GET /v1/ops/outbox` — read-only outbox health
   `{published,pending,leased,dead_lettered}`.
 - `GET /v1/ops/counters` — aggregate `{"evidence":{"<event_type>":count}}`.

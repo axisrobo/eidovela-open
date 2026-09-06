@@ -1,0 +1,14 @@
+{
+  "id": "P-O4-1",
+  "description": "Agent detail projection returns the registered agent",
+  "threat_ref": "O4",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:projection",
+    "steps": [
+      { "op": "agent_detail", "expect": "ok" }
+    ]
+  }
+}

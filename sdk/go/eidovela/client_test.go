@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestIntrospectSendsAudience(t *testing.T) {
@@ -69,6 +70,40 @@ func TestOpsReadMethodsQueryAndRoundtrip(t *testing.T) {
 	statuses, err := client.FederationTrustStatuses(ctx)
 	if err != nil || len(statuses) != 1 || statuses[0].Success != 1 {
 		t.Fatalf("federation statuses: %+v, %v", statuses, err)
+	}
+}
+
+func TestAgentDetailAndEvidenceSince(t *testing.T) {
+	var sinceQuery, detailPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/agents/agt_1":
+			detailPath = r.URL.Path
+			_ = json.NewEncoder(w).Encode(AgentSummary{AgentID: "agt_1", AgentClass: "service", LifecycleState: "active"})
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/evidence":
+			sinceQuery = r.URL.Query().Get("since")
+			_ = json.NewEncoder(w).Encode(map[string]any{"evidence": []EvidenceRecord{{Type: "identity.token.issued"}}})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+	client := NewClient(server.URL)
+	ctx := context.Background()
+	agent, err := client.AgentDetail(ctx, "agt_1")
+	if err != nil || agent.AgentID != "agt_1" {
+		t.Fatalf("agent detail: %+v, %v", agent, err)
+	}
+	if detailPath != "/v1/agents/agt_1" {
+		t.Fatalf("unexpected detail path %q", detailPath)
+	}
+	since := time.Date(2026, 9, 6, 12, 0, 0, 0, time.UTC)
+	events, err := client.ListEvidenceSince(ctx, "", &since, 0, 0)
+	if err != nil || len(events) != 1 {
+		t.Fatalf("evidence since: %+v, %v", events, err)
+	}
+	if sinceQuery != "2026-09-06T12:00:00Z" {
+		t.Fatalf("since must be UTC RFC3339, got %q", sinceQuery)
 	}
 }
 

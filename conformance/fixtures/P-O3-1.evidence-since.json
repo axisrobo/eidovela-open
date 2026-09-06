@@ -1,0 +1,14 @@
+{
+  "id": "P-O3-1",
+  "description": "A since-filtered evidence read returns the registration event",
+  "threat_ref": "O3",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:projection",
+    "steps": [
+      { "op": "evidence_since", "expect": "ok" }
+    ]
+  }
+}

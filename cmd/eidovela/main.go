@@ -63,11 +63,17 @@ func main() {
 			state = args[1]
 		}
 		result, err = client.ListAgents(ctx, state, 0, 0)
-	case "evidence":
-		if len(args) != 1 {
+	case "agent":
+		if len(args) != 2 {
 			usage()
 		}
-		result, err = client.ListEvidence(ctx, "", 0, 0)
+		result, err = client.AgentDetail(ctx, args[1])
+	case "evidence":
+		if len(args) == 1 {
+			result, err = client.ListEvidence(ctx, "", 0, 0)
+			break
+		}
+		result, err = evidenceSince(ctx, client, args[1:])
 	case "outbox":
 		if len(args) != 1 {
 			usage()
@@ -175,6 +181,23 @@ func instanceOp(ctx context.Context, client *eidovela.Client, args []string) (an
 	}
 }
 
+func evidenceSince(ctx context.Context, client *eidovela.Client, args []string) (any, error) {
+	fs := flag.NewFlagSet("evidence", flag.ExitOnError)
+	eventType := fs.String("type", "", "filter by event_type")
+	rawSince := fs.String("since", "", "filter to events at/after RFC3339 timestamp")
+	if err := fs.Parse(args); err != nil {
+		return nil, err
+	}
+	if *rawSince == "" {
+		return client.ListEvidence(ctx, *eventType, 0, 0)
+	}
+	since, err := time.Parse(time.RFC3339, *rawSince)
+	if err != nil {
+		return nil, err
+	}
+	return client.ListEvidenceSince(ctx, *eventType, &since, 0, 0)
+}
+
 func splitCSV(raw string) []string {
 	parts := strings.Split(raw, ",")
 	out := make([]string, 0, len(parts))
@@ -195,7 +218,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] federation-trust create <issuer> -jwks-uri URL -audiences a,b [-agent-claim sub] [-status active|disabled]")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance lease <instance-id> -expires RFC3339")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance terminate <instance-id>")
-	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] agents [state] | evidence | outbox | fed-status")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] agents [state] | agent <id> | evidence [-type T] [-since RFC3339] | outbox | fed-status")
 	fmt.Fprintln(os.Stderr, "PoP-bound agent flows (enroll/token/exchange/introspect) are SDK/local-loop examples.")
 	os.Exit(2)
 }
