@@ -91,6 +91,35 @@ func TestInstanceLeaseProjectionDecode(t *testing.T) {
 	}
 }
 
+func TestBlueprintRegisterAndPublish(t *testing.T) {
+	var publishPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/v1/blueprints":
+			_ = json.NewEncoder(w).Encode(Blueprint{BlueprintID: "bp_1", Publisher: "axisrobo", Version: "1.0.0", DeclaredClass: "service", Status: "draft"})
+		case r.Method == http.MethodPost && r.URL.Path == "/v1/blueprints/bp_1/publish":
+			publishPath = r.URL.Path
+			_ = json.NewEncoder(w).Encode(Blueprint{BlueprintID: "bp_1", Publisher: "axisrobo", Version: "1.0.0", DeclaredClass: "service", Status: "published"})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+	client := NewClient(server.URL)
+	ctx := context.Background()
+	created, err := client.RegisterBlueprint(ctx, Blueprint{Publisher: "axisrobo", Version: "1.0.0", DeclaredClass: "service"})
+	if err != nil || created.Status != "draft" || created.BlueprintID == "" {
+		t.Fatalf("register blueprint: %+v, %v", created, err)
+	}
+	published, err := client.PublishBlueprint(ctx, created.BlueprintID)
+	if err != nil || published.Status != "published" {
+		t.Fatalf("publish blueprint: %+v, %v", published, err)
+	}
+	if publishPath != "/v1/blueprints/bp_1/publish" {
+		t.Fatalf("unexpected publish path %q", publishPath)
+	}
+}
+
 func TestAgentDetailAndEvidenceSince(t *testing.T) {
 	var sinceQuery, detailPath string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

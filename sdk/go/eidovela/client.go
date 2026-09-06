@@ -57,6 +57,32 @@ type Agent struct {
 	Epoch   uint64 `json:"lifecycle_epoch"`
 }
 
+// Blueprint is the wire shape of an agent blueprint. Tenant is server-scoped.
+type Blueprint struct {
+	BlueprintID               string            `json:"blueprint_id,omitempty"`
+	Publisher                 string            `json:"publisher"`
+	Version                   string            `json:"version"`
+	DeclaredClass             string            `json:"declared_class"`
+	Metadata                  map[string]string `json:"metadata,omitempty"`
+	AllowedEnrollmentProfiles []string          `json:"allowed_enrollment_profiles,omitempty"`
+	Status                    string            `json:"status,omitempty"`
+}
+
+// RegisterBlueprint creates a draft blueprint for the scoped tenant.
+func (c *Client) RegisterBlueprint(ctx context.Context, blueprint Blueprint) (Blueprint, error) {
+	var saved Blueprint
+	err := c.post(ctx, "/v1/blueprints", blueprint, &saved)
+	return saved, err
+}
+
+// PublishBlueprint transitions the latest draft of a blueprint to published.
+// Only published blueprints may back agent registration.
+func (c *Client) PublishBlueprint(ctx context.Context, blueprintID string) (Blueprint, error) {
+	var saved Blueprint
+	err := c.post(ctx, "/v1/blueprints/"+blueprintID+"/publish", nil, &saved)
+	return saved, err
+}
+
 type WorkloadRegistrationRequest struct {
 	Platform            string            `json:"platform"`
 	Selector            map[string]string `json:"selector"`
