@@ -296,6 +296,100 @@ func GeneratePoPKey() (ed25519.PublicKey, ed25519.PrivateKey, error) {
 	return ed25519.GenerateKey(rand.Reader)
 }
 
+// AgentSummary is the read-projection shape of an agent.
+type AgentSummary struct {
+	AgentID        string    `json:"agent_id"`
+	AgentClass     string    `json:"agent_class"`
+	AuthorityRoot  string    `json:"authority_root_ref"`
+	LifecycleState string    `json:"lifecycle_state"`
+	Epoch          uint64    `json:"lifecycle_epoch"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type EvidenceRecord struct {
+	ID             string    `json:"event_id"`
+	Type           string    `json:"event_type"`
+	AgentID        string    `json:"agent_id,omitempty"`
+	InstanceID     string    `json:"instance_id,omitempty"`
+	LifecycleEpoch uint64    `json:"lifecycle_epoch,omitempty"`
+	Outcome        string    `json:"outcome"`
+	PayloadHash    string    `json:"payload_hash,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type OutboxStatus struct {
+	Published    int `json:"published"`
+	Pending      int `json:"pending"`
+	Leased       int `json:"leased"`
+	DeadLettered int `json:"dead_lettered"`
+}
+
+// FederationTrustStatus is a trust merged with per-issuer introspection
+// outcome telemetry (process-local counters).
+type FederationTrustStatus struct {
+	Issuer  string `json:"issuer"`
+	Status  string `json:"status"`
+	Success int64  `json:"success"`
+	Deny    int64  `json:"deny"`
+}
+
+func (c *Client) ListAgents(ctx context.Context, state string, limit, offset int) ([]AgentSummary, error) {
+	var envelope struct {
+		Agents []AgentSummary `json:"agents"`
+	}
+	path := "/v1/agents?" + pageQuery(state != "", "state="+url.QueryEscape(state), limit, offset)
+	err := c.get(ctx, path, &envelope)
+	return envelope.Agents, err
+}
+
+func (c *Client) ListAgentInstances(ctx context.Context, agentID string, limit, offset int) ([]Instance, error) {
+	var envelope struct {
+		Instances []Instance `json:"instances"`
+	}
+	err := c.get(ctx, "/v1/agents/"+agentID+"/instances?"+pageQuery(false, "", limit, offset), &envelope)
+	return envelope.Instances, err
+}
+
+func (c *Client) ListEvidence(ctx context.Context, eventType string, limit, offset int) ([]EvidenceRecord, error) {
+	var envelope struct {
+		Evidence []EvidenceRecord `json:"evidence"`
+	}
+	path := "/v1/evidence?" + pageQuery(eventType != "", "event_type="+url.QueryEscape(eventType), limit, offset)
+	err := c.get(ctx, path, &envelope)
+	return envelope.Evidence, err
+}
+
+func (c *Client) OutboxStatus(ctx context.Context) (OutboxStatus, error) {
+	var status OutboxStatus
+	err := c.get(ctx, "/v1/ops/outbox", &status)
+	return status, err
+}
+
+func (c *Client) FederationTrustStatuses(ctx context.Context) ([]FederationTrustStatus, error) {
+	var envelope struct {
+		Trusts []FederationTrustStatus `json:"trusts"`
+	}
+	err := c.get(ctx, "/v1/federation/trusts/status", &envelope)
+	return envelope.Trusts, err
+}
+
+// pageQuery composes limit/offset query params; filter, when non-empty, is
+// already URL-escaped by the caller.
+func pageQuery(hasFilter bool, filter string, limit, offset int) string {
+	params := []string{}
+	if hasFilter {
+		params = append(params, filter)
+	}
+	if limit > 0 {
+		params = append(params, fmt.Sprintf("limit=%d", limit))
+	}
+	if offset > 0 {
+		params = append(params, fmt.Sprintf("offset=%d", offset))
+	}
+	return strings.Join(params, "&")
+}
+
 func (c *Client) post(ctx context.Context, path string, request, response any) error {
 	body, err := json.Marshal(request)
 	if err != nil {
