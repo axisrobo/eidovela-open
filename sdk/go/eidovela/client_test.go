@@ -36,6 +36,42 @@ func TestIntrospectSendsAudience(t *testing.T) {
 	}
 }
 
+func TestOpsReadMethodsQueryAndRoundtrip(t *testing.T) {
+	var rawQuery string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/agents":
+			rawQuery = r.URL.RawQuery
+			_ = json.NewEncoder(w).Encode(map[string]any{"agents": []AgentSummary{{AgentID: "agt_1", AgentClass: "service", LifecycleState: "active"}}})
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/ops/outbox":
+			_ = json.NewEncoder(w).Encode(OutboxStatus{Pending: 3, Published: 1})
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/federation/trusts/status":
+			_ = json.NewEncoder(w).Encode(map[string]any{"trusts": []FederationTrustStatus{{Issuer: "https://peer.example.test", Status: "active", Success: 1}}})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+	client := NewClient(server.URL)
+	ctx := context.Background()
+
+	agents, err := client.ListAgents(ctx, "", 0, 0)
+	if err != nil || len(agents) != 1 {
+		t.Fatalf("list agents: %v", err)
+	}
+	if rawQuery != "" {
+		t.Fatalf("empty filter must produce no query string, got %q", rawQuery)
+	}
+	outbox, err := client.OutboxStatus(ctx)
+	if err != nil || outbox.Pending != 3 || outbox.Published != 1 {
+		t.Fatalf("outbox: %+v, %v", outbox, err)
+	}
+	statuses, err := client.FederationTrustStatuses(ctx)
+	if err != nil || len(statuses) != 1 || statuses[0].Success != 1 {
+		t.Fatalf("federation statuses: %+v, %v", statuses, err)
+	}
+}
+
 func TestFederationTrustAdmin(t *testing.T) {
 	saved := FederationTrust{
 		Issuer: "https://peer.example.test", JWKSURI: "https://peer.example.test/jwks.json",

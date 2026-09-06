@@ -171,9 +171,29 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.evidenceEvents())
 	case "outbox_status":
 		return s.outcome(wantDeny, s.outboxStatus())
+	case "ops_bad_page":
+		return s.outcome(wantDeny, s.get("/v1/agents?limit=abc", &struct{}{}))
+	case "ops_empty_page":
+		return s.outcome(wantDeny, s.emptyPage())
 	default:
 		return fmt.Errorf("unknown op %q", step.Op)
 	}
+}
+
+// emptyPage asserts an offset beyond the result set returns an empty 200 page.
+func (s *scenarioState) emptyPage() error {
+	var envelope struct {
+		Agents []struct {
+			AgentID string `json:"agent_id"`
+		} `json:"agents"`
+	}
+	if err := s.get("/v1/agents?offset=100000&limit=50", &envelope); err != nil {
+		return err
+	}
+	if len(envelope.Agents) != 0 {
+		return fmt.Errorf("expected empty page, got %d agents", len(envelope.Agents))
+	}
+	return nil
 }
 
 func (s *scenarioState) listAgents() error {

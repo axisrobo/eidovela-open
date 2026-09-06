@@ -54,6 +54,30 @@ func main() {
 		result, err = federationTrust(ctx, client, args[1:])
 	case "instance":
 		result, err = instanceOp(ctx, client, args[1:])
+	case "agents":
+		if len(args) > 2 {
+			usage()
+		}
+		state := ""
+		if len(args) == 2 {
+			state = args[1]
+		}
+		result, err = client.ListAgents(ctx, state, 0, 0)
+	case "evidence":
+		if len(args) != 1 {
+			usage()
+		}
+		result, err = client.ListEvidence(ctx, "", 0, 0)
+	case "outbox":
+		if len(args) != 1 {
+			usage()
+		}
+		result, err = client.OutboxStatus(ctx)
+	case "fed-status":
+		if len(args) != 1 {
+			usage()
+		}
+		result, err = client.FederationTrustStatuses(ctx)
 	default:
 		usage()
 	}
@@ -171,6 +195,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] federation-trust create <issuer> -jwks-uri URL -audiences a,b [-agent-claim sub] [-status active|disabled]")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance lease <instance-id> -expires RFC3339")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance terminate <instance-id>")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] agents [state] | evidence | outbox | fed-status")
 	fmt.Fprintln(os.Stderr, "PoP-bound agent flows (enroll/token/exchange/introspect) are SDK/local-loop examples.")
 	os.Exit(2)
 }

@@ -1,0 +1,15 @@
+{
+  "id": "N-O1-1",
+  "description": "Malformed pagination parameters are rejected with a client error",
+  "threat_ref": "O1",
+  "expectation": "deny",
+  "deny_reason": "invalid limit",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:projection",
+    "steps": [
+      { "op": "ops_bad_page", "expect": "deny" }
+    ]
+  }
+}

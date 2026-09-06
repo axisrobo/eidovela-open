@@ -1,0 +1,14 @@
+{
+  "id": "P-O2-1",
+  "description": "An offset beyond the result set returns an empty page without error",
+  "threat_ref": "O2",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:projection",
+    "steps": [
+      { "op": "ops_empty_page", "expect": "ok" }
+    ]
+  }
+}

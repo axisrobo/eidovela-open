@@ -21,6 +21,9 @@ EIDOVELA is a native **Agent Identity Provider (IdP) and authentication authorit
   (`instance-lease` profile + `/v1/instances/{id}/lease`); while a lease is set,
   token issuance requires an unexpired lease, so authorization decays with the
   instance lifecycle.
+- **Ops projection** — read-only, redacted views for console/ops
+  (`ops-projection` profile): agents, instances, evidence, outbox health and
+  per-issuer federation status telemetry, all paginated.
 
 ### What problem does EIDOVELA solve?
 

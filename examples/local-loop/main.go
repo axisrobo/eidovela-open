@@ -49,5 +49,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("agent=%s instance=%s token_active=%t\n", agent.AgentID, instance.InstanceID, active)
+	agents, err := client.ListAgents(ctx, "active", 0, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+	outbox, err := client.OutboxStatus(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("agent=%s instance=%s token_active=%t active_agents=%d outbox_pending=%d\n", agent.AgentID, instance.InstanceID, active, len(agents), outbox.Pending)
 }
