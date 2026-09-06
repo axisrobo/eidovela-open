@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -84,6 +85,26 @@ type Instance struct {
 type TokenResponse struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
+}
+
+// FederationTrust is the wire representation of a peer trust anchor. Tenant is
+// server-scoped; a caller-supplied TenantID is discarded.
+type FederationTrust struct {
+	TenantID         string            `json:"tenant_id,omitempty"`
+	Issuer           string            `json:"issuer"`
+	JWKSURI          string            `json:"jwks_uri,omitempty"`
+	AllowedAudiences []string          `json:"allowed_audiences"`
+	ClaimMappings    map[string]string `json:"claim_mappings"`
+	Status           string            `json:"status"`
+	CreatedAt        time.Time         `json:"created_at,omitempty"`
+}
+
+type federationTrustList struct {
+	Trusts []FederationTrust `json:"trusts"`
+}
+
+type federationTrustStatusRequest struct {
+	Issuer string `json:"issuer"`
 }
 
 func (c *Client) RegisterAgent(ctx context.Context, req RegisterAgentRequest) (Agent, error) {
@@ -206,14 +227,50 @@ func (c *Client) Exchange(ctx context.Context, subjectToken, parentAudience, req
 	return token, err
 }
 
-func (c *Client) Introspect(ctx context.Context, token string, privateKey ed25519.PrivateKey) (bool, error) {
+// Introspect asks the authoritative authority whether token is active for
+// audience. The audience is required: tokens issued for one audience are
+// inactive when introspected for another.
+func (c *Client) Introspect(ctx context.Context, token, audience string, privateKey ed25519.PrivateKey) (bool, error) {
 	var response struct {
 		Active bool `json:"active"`
 	}
 	err := c.post(ctx, "/v1/introspect", map[string]any{
-		"token": token, "public_key": JWKFromPublic(privateKey.Public().(ed25519.PublicKey), ""),
+		"token": token, "audience": audience,
+		"public_key": JWKFromPublic(privateKey.Public().(ed25519.PublicKey), ""),
 	}, &response)
 	return response.Active, err
+}
+
+// CreateFederationTrust creates or replaces a trust anchor for a peer issuer.
+// The server revalidates the full configuration on every write.
+func (c *Client) CreateFederationTrust(ctx context.Context, trust FederationTrust) (FederationTrust, error) {
+	var saved FederationTrust
+	err := c.post(ctx, "/v1/federation/trusts", trust, &saved)
+	return saved, err
+}
+
+func (c *Client) ListFederationTrusts(ctx context.Context) ([]FederationTrust, error) {
+	var list federationTrustList
+	err := c.get(ctx, "/v1/federation/trusts", &list)
+	return list.Trusts, err
+}
+
+func (c *Client) GetFederationTrust(ctx context.Context, issuer string) (FederationTrust, error) {
+	var trust FederationTrust
+	err := c.get(ctx, "/v1/federation/trusts?issuer="+url.QueryEscape(issuer), &trust)
+	return trust, err
+}
+
+func (c *Client) EnableFederationTrust(ctx context.Context, issuer string) (FederationTrust, error) {
+	var trust FederationTrust
+	err := c.post(ctx, "/v1/federation/trusts/enable", federationTrustStatusRequest{Issuer: issuer}, &trust)
+	return trust, err
+}
+
+func (c *Client) DisableFederationTrust(ctx context.Context, issuer string) (FederationTrust, error) {
+	var trust FederationTrust
+	err := c.post(ctx, "/v1/federation/trusts/disable", federationTrustStatusRequest{Issuer: issuer}, &trust)
+	return trust, err
 }
 
 func GeneratePoPKey() (ed25519.PublicKey, ed25519.PrivateKey, error) {
@@ -230,6 +287,33 @@ func (c *Client) post(ctx context.Context, path string, request, response any) e
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	client := c.HTTPClient
+	if client == nil {
+		client = http.DefaultClient
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		var failure struct {
+			Error string `json:"error"`
+		}
+		_ = json.NewDecoder(res.Body).Decode(&failure)
+		if failure.Error == "" {
+			failure.Error = res.Status
+		}
+		return fmt.Errorf("eidovela: %s", failure.Error)
+	}
+	return json.NewDecoder(res.Body).Decode(response)
+}
+
+func (c *Client) get(ctx context.Context, path string, response any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+path, nil)
+	if err != nil {
+		return err
+	}
 	client := c.HTTPClient
 	if client == nil {
 		client = http.DefaultClient

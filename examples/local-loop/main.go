@@ -1,4 +1,4 @@
-// local-loop demonstrates the v0.5 identity flow against eidovelad.
+// local-loop demonstrates the v1 identity flow against eidovelad.
 package main
 
 import (
@@ -45,7 +45,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	active, err := client.Introspect(ctx, token.Token, privateKey)
+	active, err := client.Introspect(ctx, token.Token, "aegivela", privateKey)
 	if err != nil {
 		log.Fatal(err)
 	}

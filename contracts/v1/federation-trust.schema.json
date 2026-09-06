@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eidovela.axisrobo.io/contracts/v1/federation-trust.json",
+  "title": "FederationTrust",
+  "description": "Operator-configured peer trust anchor. The peer owns its agents; tenant is always the local request scope and must never be mapped from peer claims.",
+  "type": "object",
+  "required": [
+    "issuer",
+    "jwks_uri",
+    "claim_mappings",
+    "allowed_audiences",
+    "status"
+  ],
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "Server-scoped tenant. A caller-supplied value is discarded."
+    },
+    "issuer": {
+      "type": "string",
+      "format": "uri",
+      "description": "Absolute https issuer URI of the peer. Plain http is only accepted for loopback development endpoints; must not be the local authority."
+    },
+    "jwks_uri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Peer JWKS endpoint used to verify peer signatures. https required except loopback."
+    },
+    "claim_mappings": {
+      "type": "object",
+      "description": "Normalized field to external claim. agent_id is required; tenant_id must not be mapped (the server rejects it).",
+      "required": ["agent_id"],
+      "additionalProperties": { "type": "string" }
+    },
+    "allowed_audiences": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Local audiences for which peer tokens may be introspected active."
+    },
+    "status": { "type": "string", "enum": ["active", "disabled"] },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

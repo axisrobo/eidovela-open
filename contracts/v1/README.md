@@ -25,11 +25,13 @@ Schemas:
 - `agent-instance.schema.json`
 - `agent-principal.schema.json`
 - `authority-binding.schema.json`
+- `federation-trust.schema.json`
 - `workload-registration.schema.json`
 
 Protocol profiles:
 
 - `enrollment-attestation.md` — optional platform evidence for `complete_enrollment`
+- `federation-profile.md` — verified-downstream trust administration and federated introspect
 - `revocation-slo.md` — immediate denial after agent revocation
 - `token-proof.md` — `private_key_jwt` proof for token issuance
 
