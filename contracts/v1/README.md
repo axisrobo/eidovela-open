@@ -32,6 +32,7 @@ Protocol profiles:
 
 - `enrollment-attestation.md` — optional platform evidence for `complete_enrollment`
 - `federation-profile.md` — verified-downstream trust administration and federated introspect
+- `instance-lease.md` — instance lease/terminate endpoints and the issuance gate
 - `revocation-slo.md` — immediate denial after agent revocation
 - `token-proof.md` — `private_key_jwt` proof for token issuance
 

@@ -76,10 +76,11 @@ type Challenge struct {
 }
 
 type Instance struct {
-	InstanceID string `json:"instance_id"`
-	AgentID    string `json:"agent_id"`
-	WorkloadID string `json:"workload_id"`
-	Status     string `json:"status"`
+	InstanceID     string    `json:"instance_id"`
+	AgentID        string    `json:"agent_id"`
+	WorkloadID     string    `json:"workload_id"`
+	Status         string    `json:"status"`
+	LeaseExpiresAt time.Time `json:"lease_expires_at,omitempty"`
 }
 
 type TokenResponse struct {
@@ -174,6 +175,24 @@ func (c *Client) Activate(ctx context.Context, agentID string) (Agent, error) {
 	var agent Agent
 	err := c.post(ctx, "/v1/agents/"+agentID+"/activate", nil, &agent)
 	return agent, err
+}
+
+// LeaseInstance binds an instance to an expiry and moves it to active. While the
+// lease is set, the instance is tokenable only before the expiry; instances
+// without a lease keep the legacy unlimited semantics. The server caps lease
+// duration.
+func (c *Client) LeaseInstance(ctx context.Context, instanceID string, expiresAt time.Time) (Instance, error) {
+	var instance Instance
+	err := c.post(ctx, "/v1/instances/"+instanceID+"/lease", map[string]any{"lease_expires_at": expiresAt}, &instance)
+	return instance, err
+}
+
+// TerminateInstance moves an instance to the terminal terminated state. A
+// terminated instance cannot request tokens and cannot be leased again.
+func (c *Client) TerminateInstance(ctx context.Context, instanceID string) (Instance, error) {
+	var instance Instance
+	err := c.post(ctx, "/v1/instances/"+instanceID+"/terminate", nil, &instance)
+	return instance, err
 }
 
 func (c *Client) Suspend(ctx context.Context, agentID string) (Agent, error) {

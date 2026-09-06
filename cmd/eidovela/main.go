@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/axisrobo/eidovela-open/sdk/go/eidovela"
 )
@@ -51,6 +52,8 @@ func main() {
 		result, err = client.Revoke(ctx, args[1])
 	case "federation-trust":
 		result, err = federationTrust(ctx, client, args[1:])
+	case "instance":
+		result, err = instanceOp(ctx, client, args[1:])
 	default:
 		usage()
 	}
@@ -116,6 +119,38 @@ func createFederationTrust(ctx context.Context, client *eidovela.Client, args []
 	return client.CreateFederationTrust(ctx, trust)
 }
 
+// instanceOp drives instance lease/terminate administration. Lease expiry is an
+// RFC 3339 timestamp in the future and within the server-configured maximum.
+func instanceOp(ctx context.Context, client *eidovela.Client, args []string) (any, error) {
+	if len(args) < 1 {
+		usage()
+	}
+	switch args[0] {
+	case "terminate":
+		if len(args) != 2 {
+			usage()
+		}
+		return client.TerminateInstance(ctx, args[1])
+	case "lease":
+		fs := flag.NewFlagSet("instance lease", flag.ExitOnError)
+		expires := fs.String("expires", "", "RFC3339 lease expiry (required)")
+		if err := fs.Parse(args[1:]); err != nil {
+			return nil, err
+		}
+		if fs.NArg() != 1 || *expires == "" {
+			usage()
+		}
+		expiry, err := time.Parse(time.RFC3339, *expires)
+		if err != nil {
+			return nil, err
+		}
+		return client.LeaseInstance(ctx, fs.Arg(0), expiry)
+	default:
+		usage()
+		return nil, nil
+	}
+}
+
 func splitCSV(raw string) []string {
 	parts := strings.Split(raw, ",")
 	out := make([]string, 0, len(parts))
@@ -134,6 +169,8 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] federation-trust list")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] federation-trust get|enable|disable <issuer>")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] federation-trust create <issuer> -jwks-uri URL -audiences a,b [-agent-claim sub] [-status active|disabled]")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance lease <instance-id> -expires RFC3339")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance terminate <instance-id>")
 	fmt.Fprintln(os.Stderr, "PoP-bound agent flows (enroll/token/exchange/introspect) are SDK/local-loop examples.")
 	os.Exit(2)
 }
