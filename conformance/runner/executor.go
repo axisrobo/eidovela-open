@@ -173,6 +173,8 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.agentDetail())
 	case "evidence_since":
 		return s.outcome(wantDeny, s.evidenceSince())
+	case "instances_lease_projection":
+		return s.outcome(wantDeny, s.instancesLeaseProjection())
 	case "outbox_status":
 		return s.outcome(wantDeny, s.outboxStatus())
 	case "ops_bad_page":
@@ -264,6 +266,34 @@ func (s *scenarioState) evidenceSince() error {
 		}
 	}
 	return fmt.Errorf("registration evidence missing in since-filtered projection")
+}
+
+func (s *scenarioState) instancesLeaseProjection() error {
+	if s.instanceID == "" {
+		return fmt.Errorf("instances_lease_projection requires completed enrollment and lease")
+	}
+	var envelope struct {
+		Instances []struct {
+			InstanceID   string `json:"instance_id"`
+			Runtime      string `json:"runtime"`
+			LeaseExpired bool   `json:"lease_expired"`
+		} `json:"instances"`
+	}
+	if err := s.get("/v1/agents/"+s.agentID+"/instances", &envelope); err != nil {
+		return err
+	}
+	for _, inst := range envelope.Instances {
+		if inst.InstanceID == s.instanceID {
+			if inst.Runtime == "" {
+				return fmt.Errorf("instance projection lost runtime field")
+			}
+			if inst.LeaseExpired {
+				return fmt.Errorf("freshly leased instance must not report lease_expired")
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("instance not present in projection")
 }
 
 func (s *scenarioState) outboxStatus() error {
