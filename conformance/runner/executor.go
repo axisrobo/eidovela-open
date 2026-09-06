@@ -165,9 +165,56 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.instanceLease(step))
 	case "instance_terminate":
 		return s.outcome(wantDeny, s.post(fmt.Sprintf("/v1/instances/%s/terminate", s.instanceID), nil, &struct{}{}))
+	case "list_agents":
+		return s.outcome(wantDeny, s.listAgents())
+	case "evidence_events":
+		return s.outcome(wantDeny, s.evidenceEvents())
+	case "outbox_status":
+		return s.outcome(wantDeny, s.outboxStatus())
 	default:
 		return fmt.Errorf("unknown op %q", step.Op)
 	}
+}
+
+func (s *scenarioState) listAgents() error {
+	var envelope struct {
+		Agents []struct {
+			AgentID string `json:"agent_id"`
+		} `json:"agents"`
+	}
+	if err := s.get("/v1/agents", &envelope); err != nil {
+		return err
+	}
+	for _, agent := range envelope.Agents {
+		if agent.AgentID == s.agentID {
+			return nil
+		}
+	}
+	return fmt.Errorf("registered agent not present in /v1/agents projection")
+}
+
+func (s *scenarioState) evidenceEvents() error {
+	var envelope struct {
+		Evidence []struct {
+			Type string `json:"event_type"`
+		} `json:"evidence"`
+	}
+	if err := s.get("/v1/evidence", &envelope); err != nil {
+		return err
+	}
+	for _, event := range envelope.Evidence {
+		if event.Type == "identity.agent.registered" {
+			return nil
+		}
+	}
+	return fmt.Errorf("registration evidence not present in /v1/evidence projection")
+}
+
+func (s *scenarioState) outboxStatus() error {
+	var stats struct {
+		Pending int `json:"pending"`
+	}
+	return s.get("/v1/ops/outbox", &stats)
 }
 
 // outcome reports nil when the step met its expected outcome: an operation that
@@ -491,6 +538,29 @@ func (s *scenarioState) post(path string, payload any, target any) error {
 		return json.NewDecoder(res.Body).Decode(target)
 	}
 	return nil
+}
+
+func (s *scenarioState) get(path string, target any) error {
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodGet, s.ex.BaseURL+path, nil)
+	if err != nil {
+		return err
+	}
+	res, err := s.ex.Client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		var failure struct {
+			Error string `json:"error"`
+		}
+		_ = json.NewDecoder(res.Body).Decode(&failure)
+		if failure.Error == "" {
+			failure.Error = res.Status
+		}
+		return fmt.Errorf("%s", failure.Error)
+	}
+	return json.NewDecoder(res.Body).Decode(target)
 }
 
 func (s *scenarioState) enrollmentProof(challengeID, nonce string, priv ed25519.PrivateKey) (string, error) {

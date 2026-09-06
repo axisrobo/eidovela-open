@@ -1,0 +1,16 @@
+{
+  "id": "P-O1-1",
+  "description": "Read projections expose the registered agent, its registration evidence, and outbox health",
+  "threat_ref": "O1",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:projection",
+    "steps": [
+      { "op": "list_agents", "expect": "ok" },
+      { "op": "evidence_events", "expect": "ok" },
+      { "op": "outbox_status", "expect": "ok" }
+    ]
+  }
+}

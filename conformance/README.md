@@ -74,3 +74,4 @@ so remote daemons (`-server` to another host) cannot run `F*` fixtures.
 | T8 audience binding | N-T8-1 | token inactive under a different introspect audience |
 | F1 federation | P-F1-1, N-F1-1..6 | trusted peer active; unknown issuer, disabled trust, non-allowed audience, expired token, unmapped agent claim, PoP mismatch all deny |
 | I1 instance lease | P-I1-1, N-I1-1 | leased instance issues active tokens; terminated instance cannot lease again or issue |
+| O1 ops projection | P-O1-1 | read projections expose the agent, its evidence and outbox health |
