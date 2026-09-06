@@ -57,5 +57,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("agent=%s instance=%s token_active=%t active_agents=%d outbox_pending=%d\n", agent.AgentID, instance.InstanceID, active, len(agents), outbox.Pending)
+	detail, err := client.AgentDetail(ctx, agent.AgentID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("agent=%s instance=%s token_active=%t active_agents=%d outbox_pending=%d state=%s root=%s\n", agent.AgentID, instance.InstanceID, active, len(agents), outbox.Pending, detail.LifecycleState, detail.AuthorityRoot)
 }
