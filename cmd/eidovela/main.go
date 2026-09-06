@@ -54,6 +54,8 @@ func main() {
 		result, err = federationTrust(ctx, client, args[1:])
 	case "instance":
 		result, err = instanceOp(ctx, client, args[1:])
+	case "blueprint":
+		result, err = blueprintOp(ctx, client, args[1:])
 	case "agents":
 		if len(args) > 2 {
 			usage()
@@ -198,6 +200,36 @@ func evidenceSince(ctx context.Context, client *eidovela.Client, args []string) 
 	return client.ListEvidenceSince(ctx, *eventType, &since, 0, 0)
 }
 
+// blueprintOp manages agent blueprints: register a draft, then publish it so
+// agents may register against it.
+func blueprintOp(ctx context.Context, client *eidovela.Client, args []string) (any, error) {
+	if len(args) < 1 {
+		usage()
+	}
+	switch args[0] {
+	case "register":
+		fs := flag.NewFlagSet("blueprint register", flag.ExitOnError)
+		class := fs.String("class", "", "declared class: twin | service | ephemeral")
+		version := fs.String("version", "", "blueprint version")
+		publisher := fs.String("publisher", "axisrobo", "blueprint publisher")
+		if err := fs.Parse(args[1:]); err != nil {
+			return nil, err
+		}
+		if fs.NArg() != 0 || *class == "" || *version == "" {
+			usage()
+		}
+		return client.RegisterBlueprint(ctx, eidovela.Blueprint{Publisher: *publisher, Version: *version, DeclaredClass: *class})
+	case "publish":
+		if len(args) != 2 {
+			usage()
+		}
+		return client.PublishBlueprint(ctx, args[1])
+	default:
+		usage()
+		return nil, nil
+	}
+}
+
 func splitCSV(raw string) []string {
 	parts := strings.Split(raw, ",")
 	out := make([]string, 0, len(parts))
@@ -219,6 +251,8 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance lease <instance-id> -expires RFC3339")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] instance terminate <instance-id>")
 	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] agents [state] | agent <id> | evidence [-type T] [-since RFC3339] | outbox | fed-status")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] blueprint register -class twin|service|ephemeral -version V [-publisher P]")
+	fmt.Fprintln(os.Stderr, "       eidovela [-server URL] blueprint publish <blueprint-id>")
 	fmt.Fprintln(os.Stderr, "PoP-bound agent flows (enroll/token/exchange/introspect) are SDK/local-loop examples.")
 	os.Exit(2)
 }
