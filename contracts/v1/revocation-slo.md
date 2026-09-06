@@ -18,3 +18,10 @@ Offline JWT/JWKS verification validates signature and claims only. It does not
 consult lifecycle state, so a token can still verify locally after revocation.
 High-risk consumers must use the authoritative introspection endpoint, which
 checks agent lifecycle state and epoch.
+
+## Federation caveat
+
+Federated (peer-issued) tokens follow a documented caveat instead: the peer is
+the lifecycle authority, so the local introspection endpoint asserts what it
+verified at presentation time without consulting a local agent registry. See
+`federation-profile.md`.

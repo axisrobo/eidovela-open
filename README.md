@@ -13,7 +13,10 @@ EIDOVELA is a native **Agent Identity Provider (IdP) and authentication authorit
 - **Platform recognition** — workload attestation understands the platform (kubernetes, spiffe, mTLS), so an identity is minted only when the workload's platform attributes match its registered selector.
 - **private_key_jwt enrollment** — proof-of-possession enrollment: the agent proves control of its key before a PoP-bound credential is issued.
 - **Lifecycle-aware token issuance** — short-lived tokens are bound to the agent's epoch and state; a suspended or revoked agent cannot obtain a valid token.
-- **Federation foundation** — verified downstream trust for federation and console workflows.
+- **Federation foundation** — operator-configured peer trust anchors
+  (`federation-trust` contract + `/v1/federation/trusts` administration) let the
+  authoritative introspection endpoint verify and honor tokens issued by a peer
+  EIDOVELA issuer for allowed audiences.
 
 ### What problem does EIDOVELA solve?
 
@@ -39,17 +42,18 @@ The core server implementation lives in the AGPL repository: <https://github.com
 
 ### Public API surface
 
-- Authoritative introspection (audience-aware)
+- Authoritative introspection (audience-aware, incl. federated peer tokens)
 - RFC 8693 token exchange (rejects audience widening)
 - OIDC discovery & JWKS
-- Federation handoff
+- Federation trust administration and verified-downstream introspection
+  (`contracts/v1/federation-profile.md`)
 
 ---
 
 ## Versioning
 
 - Format: `major.minor.patch`
-- **`eidovela-open` and `eidovela` (core) share the same version tag** (e.g. `v0.5.0`).
+- **`eidovela-open` and `eidovela` (core) share the same version tag** (e.g. `v1.1.0`).
 - `eidovela-ee` (enterprise) may carry an independent version/tag.
 
 ## Quick start — local loop
