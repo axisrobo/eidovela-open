@@ -549,6 +549,18 @@ type KeyStatus struct {
 	Overlap   bool     `json:"overlap"`
 }
 
+// BrokerIssue imports a verified external assertion (signed by a peer/broker
+// trust) as a short-lived local PoP-bound identity token.
+func (c *Client) BrokerIssue(ctx context.Context, token, audience string, publicKey ed25519.PublicKey) (TokenResponse, error) {
+	var out TokenResponse
+	err := c.post(ctx, "/v1/broker/issue", map[string]any{
+		"token":      token,
+		"audience":   audience,
+		"public_key": map[string]string{"kty": "OKP", "crv": "Ed25519", "x": base64.RawURLEncoding.EncodeToString(publicKey)},
+	}, &out)
+	return out, err
+}
+
 // KeyStatus reads the active signing kid and the keys valid now (grace overlap).
 func (c *Client) KeyStatus(ctx context.Context) (KeyStatus, error) {
 	var status KeyStatus

@@ -80,3 +80,4 @@ so remote daemons (`-server` to another host) cannot run `F*` fixtures.
 | O6 lifecycle reason | P-O6-1 | suspend with an operator reason records it on the redacted lifecycle evidence |
 | O7 cursor pagination | P-O7-1, N-O2-1 | opaque cursor walks the full agent projection exactly once; a malformed cursor is denied |
 | O8 outbox rows | P-O8-1 | the per-row outbox projection exposes a registration entry as pending for DLQ review |
+| BR broker issuance | P-BR-1, N-BR-1 | a verified peer assertion imports as a local PoP-bound token (active under its bound key only); an untrusted issuer cannot be imported |

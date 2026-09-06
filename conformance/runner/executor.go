@@ -169,6 +169,8 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.disableFederationTrust(step))
 	case "issue_peer_token":
 		return s.outcome(wantDeny, s.issuePeerToken(step))
+	case "broker_issue":
+		return s.outcome(wantDeny, s.brokerIssue(step))
 	case "instance_lease":
 		return s.outcome(wantDeny, s.instanceLease(step))
 	case "instance_terminate":
@@ -701,6 +703,33 @@ func (s *scenarioState) disableFederationTrust(step Step) error {
 // issuePeerToken signs a token with the in-process peer's key and makes it the
 // scenario's introspect subject. The token is bound to the scenario's main PoP
 // key so the following introspect step can prove possession.
+// brokerIssue imports the current peer assertion (s.issuedToken) into a local
+// PoP-bound identity token through POST /v1/broker/issue. The step is denied
+// when the assertion does not verify against an active broker trust.
+func (s *scenarioState) brokerIssue(step Step) error {
+	if s.issuedToken == "" {
+		return fmt.Errorf("broker_issue requires a peer assertion (issue_peer_token) first")
+	}
+	audience := step.Audience
+	if audience == "" {
+		audience = "aegivela"
+	}
+	var issued struct {
+		Token string `json:"token"`
+	}
+	body := map[string]any{
+		"token": s.issuedToken, "audience": audience, "public_key": jwk(s.mainPub),
+	}
+	if err := s.post("/v1/broker/issue", body, &issued); err != nil {
+		return err
+	}
+	if issued.Token == "" {
+		return fmt.Errorf("broker_issue returned an empty token")
+	}
+	s.issuedToken = issued.Token
+	return nil
+}
+
 func (s *scenarioState) issuePeerToken(step Step) error {
 	peer, err := s.ex.peerIssuer()
 	if err != nil {

@@ -1,0 +1,24 @@
+{
+  "id": "N-BR-1",
+  "description": "An assertion from an issuer with no active broker trust cannot be imported as a local token",
+  "threat_ref": "BR2",
+  "expectation": "deny",
+  "deny_reason": "untrusted broker assertion",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:broker-denied",
+    "steps": [
+      {
+        "op": "register_federation_trust",
+        "federation": {
+          "issuer": "https://peer.example.test",
+          "allowed_audiences": ["aegivela"],
+          "claim_mappings": { "agent_id": "sub" }
+        }
+      },
+      { "op": "issue_peer_token", "federation_issuer": "https://stranger.example.test", "audience": "aegivela", "expect": "ok" },
+      { "op": "broker_issue", "audience": "aegivela", "expect": "deny" }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "P-BR-1",
+  "description": "A verified peer assertion imports as a local PoP-bound token that introspects active only under its bound key",
+  "threat_ref": "BR1",
+  "expectation": "allow",
+  "scenario": {
+    "agent_class": "service",
+    "binding_type": "organization_root",
+    "authority_root_ref": "org:broker",
+    "steps": [
+      {
+        "op": "register_federation_trust",
+        "federation": {
+          "issuer": "https://peer.example.test",
+          "allowed_audiences": ["aegivela"],
+          "claim_mappings": { "agent_id": "sub" }
+        }
+      },
+      { "op": "issue_peer_token", "audience": "aegivela", "expect": "ok" },
+      { "op": "broker_issue", "audience": "aegivela", "expect": "ok" },
+      { "op": "introspect", "audience": "aegivela", "expect": "ok" },
+      { "op": "introspect", "audience": "aegivela", "present_key": "attacker", "expect": "deny" }
+    ]
+  }
+}
