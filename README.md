@@ -17,6 +17,10 @@ EIDOVELA is a native **Agent Identity Provider (IdP) and authentication authorit
   (`federation-trust` contract + `/v1/federation/trusts` administration) let the
   authoritative introspection endpoint verify and honor tokens issued by a peer
   EIDOVELA issuer for allowed audiences.
+- **Instance leases** — a workload instance can be bound to an expiry
+  (`instance-lease` profile + `/v1/instances/{id}/lease`); while a lease is set,
+  token issuance requires an unexpired lease, so authorization decays with the
+  instance lifecycle.
 
 ### What problem does EIDOVELA solve?
 
