@@ -73,6 +73,24 @@ func TestOpsReadMethodsQueryAndRoundtrip(t *testing.T) {
 	}
 }
 
+func TestInstanceLeaseProjectionDecode(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{"instances": []Instance{{
+			InstanceID: "ins_1", AgentID: "agt_1", WorkloadID: "wl_1",
+			Status: "active", LeaseExpiresAt: time.Now().Add(-time.Minute), LeaseExpired: true,
+		}}})
+	}))
+	defer server.Close()
+	client := NewClient(server.URL)
+	instances, err := client.ListAgentInstances(context.Background(), "agt_1", 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(instances) != 1 || !instances[0].LeaseExpired || instances[0].LeaseExpiresAt.IsZero() {
+		t.Fatalf("lease projection decode: %+v", instances)
+	}
+}
+
 func TestAgentDetailAndEvidenceSince(t *testing.T) {
 	var sinceQuery, detailPath string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
