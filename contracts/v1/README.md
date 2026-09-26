@@ -4,6 +4,11 @@ The `v1` contract line is the **stable** wire contract for EIDOVELA. It is the
 default contract line implemented by the core authority and consumed by the
 published SDK, CLI and conformance runner.
 
+> **Registry separation.** The Registry Separation Baseline moves Agent and Agent
+> ID registry authority to NOMIVELA. That change retires the v1 registry write
+> endpoints and adds dual-epoch tokens, so it is published as a new line, [`v2`](../v2/README.md).
+> `v1` remains frozen for existing consumers.
+
 ## Stability guarantees
 
 - The `v1` wire schemas are frozen as published. Additive evolution is allowed

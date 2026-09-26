@@ -1,5 +1,20 @@
 # EIDOVELA Conformance
 
+> **Migration status: not yet valid for registry-consumer mode.** These fixtures
+> are written against the retired v1 contract, in which `eidovelad` authored the
+> Agent, Agent ID, Authority Binding, Workload Registration and Agent Instance
+> records. That write authority now belongs to the NOMIVELA Agent Registry, and
+> `eidovelad` serves registry authoring endpoints with `410 write_authority_moved`.
+>
+> The suite is therefore **not runnable against a consumer-mode daemon** until it
+> provisions Agents, Agent IDs, Authority Bindings, Workload Registrations and
+> Agent Instances through NOMIVELA (or an in-process NOMIVELA test double) and
+> drops the retired ops (`register_workload`, `activate`, `suspend`, `revoke`,
+> `blueprint_*`, `instance_lease`, `instance_terminate`, `list_agents`,
+> `agent_detail`, `cursor_page_agents`). Scenarios that do not touch registry
+> authoring (federation `F*`, broker `BR`, ops read projections `O*`) can be
+> migrated first.
+
 Executable threat-scenario fixtures that drive a live `eidovelad` over HTTP and
 assert `allow`/`deny` per the EIDOVELA contract.
 

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v2/registry-instance.schema.json",
+  "title": "RegistryInstanceView",
+  "description": "Read-only EIDOVELA projection of a NOMIVELA Agent Instance Record.",
+  "type": "object",
+  "required": ["instance_id", "agent_id", "state", "generation", "tokenable"],
+  "properties": {
+    "instance_id": { "type": "string", "minLength": 1 },
+    "namespace": { "type": "string", "format": "uri" },
+    "agent_id": { "type": "string", "minLength": 1 },
+    "workload_registration_id": { "type": "string" },
+    "workload_id": { "type": "string" },
+    "artifact_digest": { "type": "string" },
+    "attestation_ref": { "type": "string" },
+    "lease_expires_at": { "type": "string", "format": "date-time" },
+    "state": {
+      "enum": ["pending", "active", "quarantined", "terminated", "expired"]
+    },
+    "generation": { "type": "integer", "minimum": 1 },
+    "tokenable": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

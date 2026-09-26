@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v2/registry-workload-registration.schema.json",
+  "title": "RegistryWorkloadRegistrationView",
+  "description": "Read-only EIDOVELA projection of a NOMIVELA Workload Registration Record.",
+  "type": "object",
+  "required": ["registration_id", "namespace", "platform", "trust_domain", "status", "workload_epoch"],
+  "properties": {
+    "registration_id": { "type": "string", "minLength": 1 },
+    "namespace": { "type": "string", "format": "uri" },
+    "platform": { "type": "string" },
+    "selector": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "trust_domain": { "type": "string" },
+    "allowed_proof_methods": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "status": { "enum": ["active", "suspended", "revoked"] },
+    "workload_epoch": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": true
+}
