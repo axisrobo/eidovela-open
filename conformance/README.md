@@ -1,45 +1,51 @@
 # EIDOVELA Conformance
 
-> **Migration status: not yet valid for registry-consumer mode.** These fixtures
-> are written against the retired v1 contract, in which `eidovelad` authored the
-> Agent, Agent ID, Authority Binding, Workload Registration and Agent Instance
-> records. That write authority now belongs to the NOMIVELA Agent Registry, and
-> `eidovelad` serves registry authoring endpoints with `410 write_authority_moved`.
->
-> The suite is therefore **not runnable against a consumer-mode daemon** until it
-> provisions Agents, Agent IDs, Authority Bindings, Workload Registrations and
-> Agent Instances through NOMIVELA (or an in-process NOMIVELA test double) and
-> drops the retired ops (`register_workload`, `activate`, `suspend`, `revoke`,
-> `blueprint_*`, `instance_lease`, `instance_terminate`, `list_agents`,
-> `agent_detail`, `cursor_page_agents`). Scenarios that do not touch registry
-> authoring (federation `F*`, broker `BR`, ops read projections `O*`) can be
-> migrated first.
-
 Executable threat-scenario fixtures that drive a live `eidovelad` over HTTP and
 assert `allow`/`deny` per the EIDOVELA contract.
+
+## Registry separation
+
+Agent, Agent ID, Authority Binding, Workload Registration and Agent Instance
+authority belongs to the NOMIVELA Agent Registry, and `eidovelad` serves its
+retired registry authoring endpoints with `410 write_authority_moved`.
+
+The runner therefore starts an **in-process fake NOMIVELA registry**
+(`runner.FakeRegistry`) alongside a consumer-mode daemon and passes it via
+`EIDOVELA_NOMIVELA_URL`/`EIDOVELA_NOMIVELA_NAMESPACE`. Fixtures seed Agent,
+Agent ID, Workload Registration and instance state through the fake registry
+rather than authoring records through the daemon, and registry lifecycle ops
+(`suspend`, `revoke`, `suspend_identity`, `instance_terminate`) mutate the fake.
+Registry read caching is disabled for the suite so a lifecycle change is
+observed immediately.
+
+Fixtures are self-contained per scenario: `eidovelad` restarts nothing, but each
+scenario seeds a fresh Agent ID in the fake registry.
 
 ## Layout
 
 - `fixtures/` — runnable scenarios (`P-*` positive, `N-*` negative). Each file
-  is an ordered scenario: register an agent + workload, complete enrollment
-  (with synthesized private_key_jwt / spiffe_svid / k8s_projected_sa / mtls
-  evidence), drive lifecycle, issue/exchange tokens, introspect, and (for
-  federation) register peer trusts and introspect peer-signed tokens.
+  is an ordered scenario: seed a workload, complete enrollment (with synthesized
+  private_key_jwt / spiffe_svid / k8s_projected_sa / mtls evidence), drive
+  registry lifecycle, issue/exchange tokens, introspect, and (for federation)
+  register peer trusts and introspect peer-signed tokens.
 - `fixtures/fixture.schema.json` — JSON schema for a scenario.
 - `fixtures-internal/` — verifier/issuer-internal semantics that are **not**
   observable through the public HTTP surface (unknown-issuer crafting, tenant
   override, retired-signing-key rotation). These are pinned by core unit tests
-  (`internal/sts` issuer_test.go, registry tests) instead.
-- `runner/` — Go library that executes fixtures against a daemon.
+  (`internal/sts`, `internal/registryclient`) instead.
+- `runner/` — Go library that executes fixtures against a daemon plus the fake
+  registry.
 
 ## Prerequisites
 
-A running EIDOVELA daemon. In-memory mode is sufficient:
+A consumer-mode `eidovelad` binary under `conformance/bin` (built by CI or
+locally). The runner starts the daemon and the fake registry itself; no external
+NOMIVELA deployment is required. The daemon binary must be current with the core
+registry-consumer code:
 
 ```text
 # from eidovela/backend
-EIDOVELA_LISTEN_ADDR=127.0.0.1:8099 EIDOVELA_ISSUER=https://eidovela.example.test \
-  go run ./cmd/eidovelad
+go build -o ../eidovela-open/conformance/bin/eidovelad ./cmd/eidovelad
 ```
 
 The runner only talks HTTP and depends only on the Go SDK (no AGPL core import),
@@ -48,14 +54,14 @@ so it stays within the Apache-2.0 dependency boundary.
 ## Run
 
 ```text
-go run ./cmd/eidovela-conformance -server http://127.0.0.1:8099
+go run ./cmd/eidovela-conformance
 ```
 
 Filter to one fixture family:
 
 ```text
-go run ./cmd/eidovela-conformance -server http://127.0.0.1:8099 -run T2-
-go run ./cmd/eidovela-conformance -server http://127.0.0.1:8099 -run O-
+go run ./cmd/eidovela-conformance -run T2-
+go run ./cmd/eidovela-conformance -run O-
 ```
 
 ## Evidence synthesis
@@ -85,14 +91,16 @@ so remote daemons (`-server` to another host) cannot run `F*` fixtures.
 |---|---|---|
 | T1 PoP binding | N-T1-1, P-T1-1 | wrong-key introspect inactive; valid twin active |
 | T2 workload attestation | N-T2-4/5/6, P-T2-1/2/3 | spiffe trust-domain, k8s SA, mTLS selector |
-| T4 lifecycle / revocation | N-T4-1/2 | stale epoch + revocation SLO after suspend/revoke |
+| T4 lifecycle / revocation | N-T4-1/2 | stale registry epoch + revocation SLO after registry suspend/revoke |
 | T7 exchange | N-T7-1, P-T7-1 | audience widening denied; same-audience child active |
 | T8 audience binding | N-T8-1 | token inactive under a different introspect audience |
 | F1 federation | P-F1-1, N-F1-1..6 | trusted peer active; unknown issuer, disabled trust, non-allowed audience, expired token, unmapped agent claim, PoP mismatch all deny |
-| I1 instance lease | P-I1-1, N-I1-1 | leased instance issues active tokens; terminated instance cannot lease again or issue |
-| B1 blueprint | P-B1-1, N-B1-1 | register forces draft; publish backs a bound agent; deprecation is terminal and blocks new registrations |
-| O1 ops projection | P-O1-1, N-O1-1, P-O2-1, P-O3-1, P-O4-1 | read projections expose the agent, its detail, evidence (incl. since filter) and outbox health; malformed pagination denied; out-of-range offset yields an empty page |
-| O6 lifecycle reason | P-O6-1 | suspend with an operator reason records it on the redacted lifecycle evidence |
-| O7 cursor pagination | P-O7-1, N-O2-1 | opaque cursor walks the full agent projection exactly once; a malformed cursor is denied |
-| O8 outbox rows | P-O8-1 | the per-row outbox projection exposes a registration entry as pending for DLQ review |
+| I1 instance lease | P-I1-1, N-I1-1 | leased instance issues active tokens; a terminated registry instance cannot be leased again or issue |
+| O1 registry views | P-O1-1, P-O3-1, P-O4-1 | registry agent view, verified agent context and since-filtered evidence expose the scenario |
+| O5 instance view | P-O5-1 | the registry instance view reports a fresh lease as tokenable |
+| O8 outbox rows | P-O8-1 | the per-row outbox projection exposes the enrollment entry as pending for DLQ review |
 | BR broker issuance | P-BR-1, N-BR-1 | a verified peer assertion imports as a local PoP-bound token (active under its bound key only); an untrusted issuer cannot be imported |
+
+Retired with the registry authority: blueprint lifecycle (`B1`), agent-registry
+cursor pagination (`O7`), suspend-with-reason (`O6`) and agent-registry
+pagination guards (`O1`/`O2`), because their endpoints no longer exist.

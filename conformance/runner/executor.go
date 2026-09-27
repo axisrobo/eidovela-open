@@ -26,6 +26,10 @@ type Executor struct {
 	EnrollAudience string
 	// TokenAudience mirrors the core token-proof audience.
 	TokenAudience string
+	// Registry is the fake NOMIVELA registry the daemon consumes. Fixtures seed
+	// Agent, Agent ID, Workload Registration and instance state through it
+	// instead of authoring registry records through the daemon.
+	Registry *FakeRegistry
 	// peer is the in-memory federated issuer started on first use. It serves a
 	// loopback JWKS that the daemon fetches when introspecting peer tokens.
 	peer *PeerIssuer
@@ -51,13 +55,15 @@ type Result struct {
 	Err       error
 }
 
-// NewExecutor creates an executor bound to a daemon URL.
-func NewExecutor(baseURL string) *Executor {
+// NewExecutor creates an executor bound to a daemon URL. registry may be nil
+// only when the daemon manages its own registry (not the conformance default).
+func NewExecutor(baseURL string, registry *FakeRegistry) *Executor {
 	return &Executor{
 		BaseURL:        strings.TrimSuffix(baseURL, "/"),
 		Client:         &http.Client{Timeout: 15 * time.Second},
 		EnrollAudience: "eidovela:enroll",
 		TokenAudience:  "eidovela:token",
+		Registry:       registry,
 	}
 }
 
@@ -113,21 +119,14 @@ func (e *Executor) begin(ctx context.Context, fixture Fixture) (*scenarioState, 
 		mainPub: mainPub, mainPriv: mainPriv,
 		attackerPub: attackerPub, attackerPriv: attackerPriv,
 	}
-	// Register the agent.
-	var agent struct {
-		AgentID string `json:"agent_id"`
+	// The Agent and its Agent ID are registered in NOMIVELA, not in the daemon.
+	if e.Registry == nil {
+		return nil, fmt.Errorf("register agent: no fake registry configured")
 	}
-	payload := map[string]any{
-		"class": fixture.Scenario.AgentClass, "binding_type": fixture.Scenario.BindingType,
-		"authority_root_ref": fixture.Scenario.AuthorityRootRef,
-	}
-	if err := s.post("/v1/agents", payload, &agent); err != nil {
-		return nil, fmt.Errorf("register agent: %w", err)
-	}
-	s.agentID = agent.AgentID
 	s.agentClass = fixture.Scenario.AgentClass
 	s.bindingType = fixture.Scenario.BindingType
 	s.authorityRootRef = fixture.Scenario.AuthorityRootRef
+	s.agentID = e.Registry.SeedAgent(s.agentClass, s.bindingType, s.authorityRootRef)
 	return s, nil
 }
 
@@ -139,11 +138,24 @@ func (s *scenarioState) execStep(step Step) error {
 	case "complete_enrollment":
 		return s.outcome(wantDeny, s.completeEnrollment(step))
 	case "activate":
-		return s.outcome(wantDeny, s.post(fmt.Sprintf("/v1/agents/%s/activate", s.agentID), nil, &struct{}{}))
+		// The Agent is already active in the registry; activation is the
+		// Registry's authority, not the daemon's.
+		return s.outcome(wantDeny, nil)
 	case "suspend":
-		return s.outcome(wantDeny, s.post(fmt.Sprintf("/v1/agents/%s/suspend", s.agentID), nil, &struct{}{}))
+		if s.ex.Registry != nil {
+			s.ex.Registry.SuspendAgent()
+		}
+		return s.outcome(wantDeny, nil)
 	case "revoke":
-		return s.outcome(wantDeny, s.post(fmt.Sprintf("/v1/agents/%s/revoke", s.agentID), nil, &struct{}{}))
+		if s.ex.Registry != nil {
+			s.ex.Registry.RevokeAgent()
+		}
+		return s.outcome(wantDeny, nil)
+	case "suspend_identity":
+		if s.ex.Registry != nil {
+			s.ex.Registry.SuspendIdentity()
+		}
+		return s.outcome(wantDeny, nil)
 	case "issue_token":
 		return s.outcome(wantDeny, s.issueToken(step))
 	case "introspect":
@@ -174,7 +186,10 @@ func (s *scenarioState) execStep(step Step) error {
 	case "instance_lease":
 		return s.outcome(wantDeny, s.instanceLease(step))
 	case "instance_terminate":
-		return s.outcome(wantDeny, s.post(fmt.Sprintf("/v1/instances/%s/terminate", s.instanceID), nil, &struct{}{}))
+		if s.ex.Registry != nil {
+			s.ex.Registry.TerminateInstance(s.instanceID)
+		}
+		return s.outcome(wantDeny, nil)
 	case "list_agents":
 		return s.outcome(wantDeny, s.listAgents())
 	case "evidence_events":
@@ -189,28 +204,6 @@ func (s *scenarioState) execStep(step Step) error {
 		return s.outcome(wantDeny, s.outboxStatus())
 	case "outbox_events":
 		return s.outcome(wantDeny, s.outboxEventsList())
-	case "ops_bad_page":
-		return s.outcome(wantDeny, s.get("/v1/agents?limit=abc", &struct{}{}))
-	case "ops_bad_cursor":
-		return s.outcome(wantDeny, s.get("/v1/agents?cursor=not-base64!!", &struct{}{}))
-	case "ops_empty_page":
-		return s.outcome(wantDeny, s.emptyPage())
-	case "blueprint_register":
-		return s.outcome(wantDeny, s.blueprintRegister(step))
-	case "blueprint_publish":
-		return s.outcome(wantDeny, s.blueprintPublish())
-	case "blueprint_deprecate":
-		return s.outcome(wantDeny, s.blueprintDeprecate())
-	case "register_blueprint_agent":
-		return s.outcome(wantDeny, s.registerBlueprintAgent())
-	case "blueprint_list":
-		return s.outcome(wantDeny, s.blueprintList(step))
-	case "suspend_with_reason":
-		return s.outcome(wantDeny, s.suspendWithReason(step))
-	case "evidence_lifecycle_reason":
-		return s.outcome(wantDeny, s.evidenceLifecycleReason(step))
-	case "cursor_page_agents":
-		return s.outcome(wantDeny, s.cursorPageAgents())
 	default:
 		return fmt.Errorf("unknown op %q", step.Op)
 	}
@@ -389,18 +382,19 @@ func (s *scenarioState) cursorPageAgents() error {
 func (s *scenarioState) listAgents() error {
 	var envelope struct {
 		Agents []struct {
-			AgentID string `json:"agent_id"`
+			AgentID   string `json:"agent_id"`
+			AgentEpoch int64 `json:"agent_epoch"`
 		} `json:"agents"`
 	}
-	if err := s.get("/v1/agents", &envelope); err != nil {
+	if err := s.get("/v1/registry/agents", &envelope); err != nil {
 		return err
 	}
 	for _, agent := range envelope.Agents {
-		if agent.AgentID == s.agentID {
+		if agent.AgentID == s.agentID && agent.AgentEpoch >= 1 {
 			return nil
 		}
 	}
-	return fmt.Errorf("registered agent not present in /v1/agents projection")
+	return fmt.Errorf("registry agent not present in /v1/registry/agents view")
 }
 
 func (s *scenarioState) evidenceEvents() error {
@@ -412,24 +406,28 @@ func (s *scenarioState) evidenceEvents() error {
 	if err := s.get("/v1/evidence", &envelope); err != nil {
 		return err
 	}
+	// The first evidence EIDOVELA owns is the completed enrollment; Agent
+	// registration evidence is NOMIVELA's.
 	for _, event := range envelope.Evidence {
-		if event.Type == "identity.agent.registered" {
+		if event.Type == "identity.enrollment.completed" {
 			return nil
 		}
 	}
-	return fmt.Errorf("registration evidence not present in /v1/evidence projection")
+	return fmt.Errorf("enrollment evidence not present in /v1/evidence projection")
 }
 
 func (s *scenarioState) agentDetail() error {
-	var agent struct {
-		AgentID string `json:"agent_id"`
-		State   string `json:"lifecycle_state"`
+	var context struct {
+		AgentID       string `json:"agent_id"`
+		AgentEpoch    int64  `json:"agent_epoch"`
+		IdentityEpoch int64  `json:"identity_epoch"`
+		Tokenable     bool   `json:"tokenable"`
 	}
-	if err := s.get("/v1/agents/"+s.agentID, &agent); err != nil {
+	if err := s.get("/v1/verified-agent-context?agent_id="+url.QueryEscape(s.agentID), &context); err != nil {
 		return err
 	}
-	if agent.AgentID != s.agentID || agent.State != "registered" {
-		return fmt.Errorf("agent detail mismatch: %+v", agent)
+	if context.AgentID != s.agentID || context.AgentEpoch < 1 || context.IdentityEpoch < 1 {
+		return fmt.Errorf("verified agent context mismatch: %+v", context)
 	}
 	return nil
 }
@@ -445,11 +443,11 @@ func (s *scenarioState) evidenceSince() error {
 		return err
 	}
 	for _, event := range envelope.Evidence {
-		if event.Type == "identity.agent.registered" {
+		if event.Type == "identity.enrollment.completed" {
 			return nil
 		}
 	}
-	return fmt.Errorf("registration evidence missing in since-filtered projection")
+	return fmt.Errorf("enrollment evidence missing in since-filtered projection")
 }
 
 func (s *scenarioState) instancesLeaseProjection() error {
@@ -458,26 +456,23 @@ func (s *scenarioState) instancesLeaseProjection() error {
 	}
 	var envelope struct {
 		Instances []struct {
-			InstanceID   string `json:"instance_id"`
-			Runtime      string `json:"runtime"`
-			LeaseExpired bool   `json:"lease_expired"`
+			InstanceID string `json:"instance_id"`
+			State      string `json:"state"`
+			Tokenable  bool   `json:"tokenable"`
 		} `json:"instances"`
 	}
-	if err := s.get("/v1/agents/"+s.agentID+"/instances", &envelope); err != nil {
+	if err := s.get("/v1/registry/agents/"+s.agentID+"/instances", &envelope); err != nil {
 		return err
 	}
 	for _, inst := range envelope.Instances {
 		if inst.InstanceID == s.instanceID {
-			if inst.Runtime == "" {
-				return fmt.Errorf("instance projection lost runtime field")
-			}
-			if inst.LeaseExpired {
-				return fmt.Errorf("freshly leased instance must not report lease_expired")
+			if !inst.Tokenable {
+				return fmt.Errorf("freshly leased instance must be tokenable")
 			}
 			return nil
 		}
 	}
-	return fmt.Errorf("instance not present in projection")
+	return fmt.Errorf("instance not present in registry instance view")
 }
 
 func (s *scenarioState) outboxStatus() error {
@@ -502,14 +497,14 @@ func (s *scenarioState) outboxEventsList() error {
 		return err
 	}
 	for _, event := range envelope.Events {
-		if event.Topic == "identity.agent.registered" && event.Agent == s.agentID {
+		if event.Topic == "identity.enrollment.completed" && event.Agent == s.agentID {
 			if event.State != "pending" {
-				return fmt.Errorf("registration outbox row state = %s, want pending", event.State)
+				return fmt.Errorf("enrollment outbox row state = %s, want pending", event.State)
 			}
 			return nil
 		}
 	}
-	return fmt.Errorf("registration outbox row missing for agent %s", s.agentID)
+	return fmt.Errorf("enrollment outbox row missing for agent %s", s.agentID)
 }
 
 // outcome reports nil when the step met its expected outcome: an operation that
@@ -529,17 +524,11 @@ func (s *scenarioState) registerWorkload(step Step) error {
 	if step.Workload == nil {
 		return fmt.Errorf("register_workload requires workload")
 	}
-	var workload struct {
-		RegistrationID string `json:"registration_id"`
+	if s.ex.Registry == nil {
+		return fmt.Errorf("register_workload requires a fake registry")
 	}
-	payload := map[string]any{
-		"platform": step.Workload.Platform, "selector": step.Workload.Selector,
-		"trust_domain": step.Workload.TrustDomain, "allowed_proof_methods": step.Workload.AllowedProofMethods,
-	}
-	if err := s.post("/v1/workload-registrations", payload, &workload); err != nil {
-		return err
-	}
-	s.regID = workload.RegistrationID
+	// Workload Registration is NOMIVELA authority; seed it directly.
+	s.regID = s.ex.Registry.AddWorkload(*step.Workload)
 	// Create the enrollment challenge.
 	var challenge struct {
 		ID      string `json:"enrollment_id"`
@@ -771,11 +760,11 @@ func (s *scenarioState) instanceLease(step Step) error {
 	if s.instanceID == "" {
 		return fmt.Errorf("instance_lease requires completed enrollment")
 	}
-	var instance struct {
-		Status string `json:"status"`
+	// The instance lease is recorded in the registry, not the daemon.
+	if s.ex.Registry == nil {
+		return fmt.Errorf("instance_lease requires a fake registry")
 	}
-	body := map[string]any{"lease_expires_at": time.Now().Add(time.Hour)}
-	return s.post("/v1/instances/"+s.instanceID+"/lease", body, &instance)
+	return s.ex.Registry.LeaseInstance(s.instanceID, time.Now().Add(time.Hour))
 }
 
 func (s *scenarioState) buildAttestation(att *Attest, pub ed25519.PublicKey, priv ed25519.PrivateKey) (map[string]any, error) {

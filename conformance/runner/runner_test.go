@@ -30,21 +30,20 @@ func TestFixturesAgainstDaemon(t *testing.T) {
 		t.Fatalf("no fixtures found under %s", dir)
 	}
 
-	baseURL := os.Getenv("EIDOVELA_CONFORMANCE_URL")
-	var stop func()
-	if baseURL == "" {
-		binaryPath, findErr := runner.FindDaemonBinary(dir)
-		if findErr != nil {
-			t.Skipf("no local daemon binary and EIDOVELA_CONFORMANCE_URL unset: %v", findErr)
-		}
-		baseURL, stop, err = runner.StartDaemon(binaryPath)
-		if err != nil {
-			t.Fatalf("start daemon: %v", err)
-		}
-		defer stop()
+	// Consumer-mode daemons require a registry. The runner always starts an
+	// in-process fake NOMIVELA registry alongside a local daemon, so an
+	// externally managed daemon is not supported by the fixture suite.
+	binaryPath, findErr := runner.FindDaemonBinary(dir)
+	if findErr != nil {
+		t.Skipf("no local daemon binary: %v", findErr)
 	}
+	baseURL, registry, stop, err := runner.StartDaemon(binaryPath)
+	if err != nil {
+		t.Fatalf("start daemon: %v", err)
+	}
+	defer stop()
 
-	ex := runner.NewExecutor(baseURL)
+	ex := runner.NewExecutor(baseURL, registry)
 	for _, fixture := range fixtures {
 		fixture := fixture
 		t.Run(fixture.ID, func(t *testing.T) {

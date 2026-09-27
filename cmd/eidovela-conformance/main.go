@@ -1,7 +1,7 @@
 // Command eidovela-conformance runs the EIDOVELA conformance fixtures against a
-// live eidovelad. Point it at a daemon with -server (default
-// http://localhost:8080). The daemon may run in-memory or against PostgreSQL;
-// fixtures create their own agents and workloads per scenario.
+// locally started consumer-mode eidovelad backed by an in-process fake NOMIVELA
+// registry. The runner manages both, so no external daemon or registry is
+// needed.
 package main
 
 import (
@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	server := flag.String("server", "http://localhost:8080", "EIDOVELA server URL")
+	daemonPath := flag.String("daemon", "", "eidovelad binary (default: conformance/bin, built by CI)")
 	fixturesDir := flag.String("fixtures", "", "fixtures directory (default: conformance/fixtures)")
 	only := flag.String("run", "", "run only fixtures whose id contains this substring")
 	flag.Parse()
@@ -28,6 +28,14 @@ func main() {
 		}
 		*fixturesDir = filepath.Join(cwd, "conformance", "fixtures")
 	}
+	binaryPath := *daemonPath
+	if binaryPath == "" {
+		var err error
+		binaryPath, err = runner.FindDaemonBinary(*fixturesDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	fixtures, err := runner.LoadFixtures(*fixturesDir)
 	if err != nil {
 		log.Fatal(err)
@@ -35,7 +43,12 @@ func main() {
 	if len(fixtures) == 0 {
 		log.Fatalf("no fixtures found under %s", *fixturesDir)
 	}
-	ex := runner.NewExecutor(*server)
+	baseURL, registry, stop, err := runner.StartDaemon(binaryPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stop()
+	ex := runner.NewExecutor(baseURL, registry)
 	ctx := context.Background()
 	passed, failed := 0, 0
 	for _, fixture := range fixtures {

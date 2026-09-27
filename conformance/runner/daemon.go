@@ -44,43 +44,57 @@ func FindDaemonBinary(fixturesDir string) (string, error) {
 	return "", fmt.Errorf("runner: no %s daemon under %s; build it first", name, binDir)
 }
 
-// StartDaemon launches a daemon binary in memory mode on a free loopback port
-// and returns a stop func plus the base URL. It waits until /healthz responds.
-func StartDaemon(binaryPath string) (baseURL string, stop func(), err error) {
+// StartDaemon launches a daemon binary in registry-consumer mode on a free
+// loopback port, backed by an in-process fake NOMIVELA registry, and returns a
+// stop func, the daemon base URL and the fake registry. It waits until /healthz
+// responds.
+//
+// Registry caching is disabled so a fixture that changes registry state (for
+// example suspending an Agent) is observed immediately by the next request.
+func StartDaemon(binaryPath string) (baseURL string, registry *FakeRegistry, stop func(), err error) {
 	if binaryPath == "" {
 		binaryPath, err = FindDaemonBinary("fixtures")
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 	}
 	port := freePort()
 	if port == 0 {
-		return "", nil, errors.New("runner: no free port available")
+		return "", nil, nil, errors.New("runner: no free port available")
+	}
+	registry, err = StartFakeRegistry("")
+	if err != nil {
+		return "", nil, nil, err
 	}
 	baseURL = fmt.Sprintf("http://127.0.0.1:%d", port)
 	cmd := exec.Command(binaryPath)
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("EIDOVELA_LISTEN_ADDR=127.0.0.1:%d", port),
 		"EIDOVELA_ISSUER=https://eidovela.example.test",
+		"EIDOVELA_NOMIVELA_URL="+registry.BaseURL(),
+		"EIDOVELA_NOMIVELA_NAMESPACE="+registry.Namespace(),
+		"EIDOVELA_NOMIVELA_CACHE_TTL=0s",
 	)
 	if err := cmd.Start(); err != nil {
-		return "", nil, err
+		registry.Stop()
+		return "", nil, nil, err
 	}
 	stop = func() {
 		if cmd.Process != nil {
 			_ = cmd.Process.Kill()
 			_, _ = cmd.Process.Wait()
 		}
+		registry.Stop()
 	}
 	deadline := time.Now().Add(15 * time.Second)
 	for time.Now().Before(deadline) {
 		if healthy(baseURL) {
-			return baseURL, stop, nil
+			return baseURL, registry, stop, nil
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
 	stop()
-	return "", nil, fmt.Errorf("runner: daemon did not become healthy at %s", baseURL)
+	return "", nil, nil, fmt.Errorf("runner: daemon did not become healthy at %s", baseURL)
 }
 
 func healthy(baseURL string) bool {

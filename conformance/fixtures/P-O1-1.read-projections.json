@@ -8,6 +8,16 @@
     "binding_type": "organization_root",
     "authority_root_ref": "org:projection",
     "steps": [
+      {
+        "op": "register_workload",
+        "workload": {
+          "platform": "kubernetes",
+          "selector": { "namespace": "prod", "serviceaccount": "agent" },
+          "trust_domain": "example.test",
+          "allowed_proof_methods": ["private_key_jwt"]
+        }
+      },
+      { "op": "complete_enrollment", "attestation": { "method": "private_key_jwt" }, "workload_attributes": { "namespace": "prod", "serviceaccount": "agent" } },
       { "op": "list_agents", "expect": "ok" },
       { "op": "evidence_events", "expect": "ok" },
       { "op": "outbox_status", "expect": "ok" }
