@@ -18,10 +18,12 @@ broker trust) into a local identity token:
 - On success the response is a normal local token
   `{"token": "...", "expires_at": "..."}` whose `sub` is
   `fed:<broker issuer>/<mapped subject>`. It carries no local agent row and no
-  lifecycle epoch; it is PoP-bound (`cnf.jkt`) and capped at the issuer TTL, so
-  it expires (never needs a registry revocation).
+lifecycle epoch; it is PoP-bound (`cnf.jkt`) and capped at the issuer TTL, so
+  it expires. It also carries the verified external issuer as `external_issuer`.
 - Authoritative `/v1/introspect` validates such tokens like any local token:
-  active only under the bound PoP key, for the issued audience, until expiry.
+  active only under the bound PoP key, for the issued audience, while the
+  corresponding Federation Trust remains active, and until expiry. Disabling
+  that trust revokes an unexpired brokered token on its next online check.
 
 ## Guards
 
