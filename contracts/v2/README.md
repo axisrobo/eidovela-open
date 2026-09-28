@@ -56,6 +56,7 @@ GET  /v1/authentication-state/{agentID}
 POST /v1/authentication-state/{agentID}/quarantine
 POST /v1/authentication-state/{agentID}/disable
 POST /v1/authentication-state/{agentID}/reinstate
+GET  /v1/attestations/{attestationRef}
 ```
 
 Unchanged in v2: `/oauth2/token`, `/v1/token/exchange`, `/v1/introspect`,
@@ -76,6 +77,7 @@ registry epoch invalidates an unexpired token on online verification.
 - `registry-workload-registration.schema.json`
 - `authentication-state.schema.json`
 - `credential.schema.json`
+- `attestation-result.schema.json`
 
 ## Stability
 

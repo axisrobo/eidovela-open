@@ -20,7 +20,8 @@ lifecycle records.
 | Registry Context | Atomic context is used for token issuance and authoritative online verification. |
 | Lifecycle invalidation | Tokens carry `agent_epoch` and `identity_epoch`; either mismatch invalidates the token online. |
 | Enrollment | `private_key_jwt` proof and registered workload selector are required; verified instance is committed to NOMIVELA with a stable idempotency key. |
-| Attestation | SPIFFE/mTLS certificate chain and Kubernetes JWT/JWKS verification are available when configured; required trust mode fails closed. |
+| Attestation | SPIFFE/mTLS certificate chain and Kubernetes JWT/JWKS verification are available when configured; required trust and platform modes fail closed. Each enrollment records a sanitized attestation result resolvable at `/v1/attestations/{ref}`. |
+| Credential generation | Re-enrollment issues a new monotonic generation and revokes prior active generations. |
 | PoP | Enrollment and token issuance use Ed25519 proof; identity tokens carry `cnf.jkt`. |
 | Credential lifecycle | Credential generation, revocation and authentication quarantine/disable are enforced during online verification. |
 | Discovery | Canonical namespace, signed discovery (when required), registry/JWKS endpoint validation, no-proxy DNS-revalidated retrieval, bounded response and host allowlist checks. |
@@ -57,12 +58,15 @@ anchor distribution and database migration procedure.
 - `EIDOVELA_NOMIVELA_DISCOVERY_REQUIRE_SIGNATURE=true` when the deployment
   requires signed discovery, plus trusted discovery keys or Registry JWKS
   resolution as configured
+- `EIDOVELA_ATTESTATION_REQUIRE_TRUST=1` and
+  `EIDOVELA_ATTESTATION_REQUIRE_PLATFORM=1` for the conforming production
+  workload-attestation profile
 
 ## Known limitations
 
 - The public conformance runner uses a fake Registry; it does not replace an
   end-to-end run against a production NOMIVELA 2.0 deployment.
-- Workload attestation trust is opt-in unless
-  `EIDOVELA_ATTESTATION_REQUIRE_TRUST=1` is configured.
+- Workload attestation trust and platform evidence are opt-in unless the
+  conforming production profile settings are configured.
 - HSM/KMS custody, multi-region operation and console administration remain
   enterprise capabilities.
