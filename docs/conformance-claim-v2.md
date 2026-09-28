@@ -22,7 +22,7 @@ lifecycle records.
 | Enrollment | `private_key_jwt` proof and registered workload selector are required; verified instance is committed to NOMIVELA with a stable idempotency key. |
 | Attestation | SPIFFE/mTLS certificate chain and Kubernetes JWT/JWKS verification are available when configured; required trust and platform modes fail closed. Each enrollment records a sanitized attestation result resolvable at `/v1/attestations/{ref}`. |
 | Credential generation | Re-enrollment issues a new monotonic generation and revokes prior active generations. |
-| PoP | Enrollment and token issuance use Ed25519 proof; identity tokens carry `cnf.jkt`. |
+| PoP | Enrollment and token issuance use Ed25519 proof; identity tokens carry `cnf.jkt`. Introspection accepts an RFC 9449 `dpop_proof` (signature, `htm`/`htu`, time, `ath`, `jti` replay), and `EIDOVELA_REQUIRE_DPOP=1` rejects key-only introspection. |
 | Credential lifecycle | Credential generation, revocation and authentication quarantine/disable are enforced during online verification. |
 | Discovery | Canonical namespace, signed discovery (when required), registry/JWKS endpoint validation, no-proxy DNS-revalidated retrieval, bounded response and host allowlist checks. |
 | Registry service auth | Static or file-reloaded NOMIVELA service-principal bearer token; namespace-scoped `registry.read`, `instance.commit`, and optional `events.consume`. |
