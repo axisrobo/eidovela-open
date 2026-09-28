@@ -95,7 +95,7 @@ so remote daemons (`-server` to another host) cannot run `F*` fixtures.
 | T7 exchange | N-T7-1, P-T7-1 | audience widening denied; same-audience child active |
 | T8 audience binding | N-T8-1 | token inactive under a different introspect audience |
 | F1 federation | P-F1-1, N-F1-1..6 | trusted peer active; unknown issuer, disabled trust, non-allowed audience, expired token, unmapped agent claim, PoP mismatch all deny |
-| I1 instance lease | P-I1-1, N-I1-1 | leased instance issues active tokens; a terminated registry instance cannot be leased again or issue |
+| I1 instance lease | P-I1-1, N-I1-1, N-I1-2 | leased instance issues active tokens; a terminated registry instance cannot be leased again or issue, and a token issued before termination is inactive on the next online verification |
 | O1 registry views | P-O1-1, P-O3-1, P-O4-1 | registry agent view, verified agent context and since-filtered evidence expose the scenario |
 | O5 instance view | P-O5-1 | the registry instance view reports a fresh lease as tokenable |
 | O8 outbox rows | P-O8-1 | the per-row outbox projection exposes the enrollment entry as pending for DLQ review |

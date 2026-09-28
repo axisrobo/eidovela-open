@@ -238,6 +238,8 @@ func (r *FakeRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		r.mu.Unlock()
 		writeItems(w, items)
+	case req.Method == http.MethodGet && path == "/v1/registry-context":
+		r.registryContext(w, req)
 	case req.Method == http.MethodGet && strings.HasPrefix(path, "/v1/agent-identities/") && strings.HasSuffix(path, "/instances"):
 		agentID := strings.TrimSuffix(strings.TrimPrefix(path, "/v1/agent-identities/"), "/instances")
 		r.mu.Lock()
@@ -256,6 +258,73 @@ func (r *FakeRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		r.commitInstance(w, req, agentID)
 	default:
 		writeJSONBody(w, http.StatusNotFound, map[string]any{"error": map[string]any{"code": "not_found", "message": "fake registry: " + path}})
+	}
+}
+
+// registryContext serves the atomic Registry Context EIDOVELA uses for issuance
+// and online verification: the Agent, Agent Identity, and the selected
+// Workload Registration and Agent Instance from one consistent view.
+func (r *FakeRegistry) registryContext(w http.ResponseWriter, req *http.Request) {
+	query := req.URL.Query()
+	agentID := query.Get("agentId")
+	instanceID := query.Get("instanceId")
+	workloadRegistrationID := query.Get("workloadRegistrationId")
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if agentID != r.agentID {
+		writeJSONBody(w, http.StatusNotFound, map[string]any{"error": map[string]any{"code": "not_found", "message": "unknown agent"}})
+		return
+	}
+	body := map[string]any{
+		"namespace": r.namespaceJSON(),
+		"agent":     r.agentJSON(),
+		"identity":  r.identityJSON(),
+	}
+	if instanceID != "" {
+		inst, ok := r.instances[instanceID]
+		if !ok {
+			writeJSONBody(w, http.StatusNotFound, map[string]any{"error": map[string]any{"code": "not_found", "message": "unknown instance"}})
+			return
+		}
+		body["instance"] = r.instanceJSON(inst)
+		workloadRegistrationID = inst.registrationID
+	}
+	if workloadRegistrationID != "" {
+		workload, ok := r.workloads[workloadRegistrationID]
+		if !ok {
+			writeJSONBody(w, http.StatusNotFound, map[string]any{"error": map[string]any{"code": "not_found", "message": "unknown workload registration"}})
+			return
+		}
+		body["workloadRegistration"] = map[string]any{
+			"workloadRegistrationId": workload.id, "namespace": r.namespace, "platform": workload.platform,
+			"selector": workload.selector, "trustDomain": workload.trustDomain,
+			"allowedProofMethods": workload.methods, "status": workload.status, "workloadEpoch": workload.epoch,
+		}
+	}
+	writeJSONBody(w, http.StatusOK, body)
+}
+
+func (r *FakeRegistry) namespaceJSON() map[string]any {
+	return map[string]any{
+		"namespace": r.namespace, "authorityRootRef": r.authorityRootRef,
+		"status": "active", "namespaceEpoch": 1,
+	}
+}
+
+func (r *FakeRegistry) agentJSON() map[string]any {
+	return map[string]any{
+		"agentRef": r.agentRef, "name": r.agentRef, "purpose": "conformance",
+		"sponsorRef": r.sponsorRef, "ownerRef": r.authorityRootRef, "riskClass": "low",
+		"agentClass": r.agentClass, "state": r.agentState, "agentEpoch": r.agentEpoch,
+	}
+}
+
+func (r *FakeRegistry) identityJSON() map[string]any {
+	return map[string]any{
+		"namespace": r.namespace, "agentId": r.agentID, "agentRef": r.agentRef,
+		"state": r.identityState, "identityEpoch": r.identityEpoch,
+		"authorityRootRef": r.authorityRootRef, "authorityRootType": r.authorityRootType,
 	}
 }
 
