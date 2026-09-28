@@ -1,7 +1,7 @@
 # EIDOVELA 2.0 Conformance Claim
 
 Status: project implementation claim, not a certification  
-Version: 2.1.0  
+Version: 2.2.0  
 Date: 2026-09-28
 
 ## Scope
@@ -28,6 +28,49 @@ lifecycle records.
 | Registry service auth | Static or file-reloaded NOMIVELA service-principal bearer token; namespace-scoped `registry.read`, `instance.commit`, and optional `events.consume`. |
 | Federation | Active trust, signature, audience, time, PoP and mapping validation; disabling trust invalidates brokered local tokens on their next online verification. Peer JWKS retrieval shares the discovery SSRF/DNS-rebinding controls, and federated evidence namespaces the peer subject as `fed:<issuer>/<subject>` with a correlation id instead of a local agent reference. |
 | Event invalidation | Optional cursor replay invalidates bounded Registry caches; authoritative issuance and online verification remain point reads. |
+| Security events | Enrollment denials record a bounded reason and challenge correlation id; credential revocation and authentication quarantine/disable/reinstate record sanitized events. No tokens, proofs, evidence or unrestricted attributes are persisted. |
+
+## Proof profiles and artifact versions
+
+| Class | Profile | Notes |
+|---|---|---|
+| Enrollment proof | Project JWT proof, `aud=eidovela:enroll`, challenge-bound `jti`/`nonce` | Not an RFC 7523 `private_key_jwt` wire binding |
+| Workload evidence | `private_key_jwt`, `spiffe_svid`, `k8s_projected_sa`, `mtls` | Versioned through NOMIVELA `proofRequirements` when present |
+| Identity token | Ed25519 `EdDSA`, `cnf.jkt` (RFC 7638), `agent_epoch` + `identity_epoch`, audience-bound | TTL 10 minutes |
+| Request PoP | RFC 9449 DPoP on introspection (`htm`/`htu`/`ath`/`jti`) | Optional; mandatory with `EIDOVELA_REQUIRE_DPOP=1` |
+| Registry contract | NOMIVELA `agent-registry-v1.0` via `nomivela-open/v2` | Registry Context, idempotent commit, signed discovery, event cursor |
+| Public contracts | `contracts/v2` (Registry Consumer), `contracts/v1` (frozen) | — |
+
+## Bounds
+
+| Bound | Value |
+|---|---|
+| Registry read cache TTL | `2s` default; `EIDOVELA_NOMIVELA_CACHE_TTL=0s` disables |
+| Identity token TTL | 10 minutes |
+| DPoP proof max age | 1 minute, plus 30s forward skew |
+| Enrollment challenge TTL | 5 minutes |
+| Discovery/JWKS response cap | 64 KiB discovery, 256 KiB peer JWKS |
+| Registry JWKS/discovery key cache | 5 minute TTL, 30 second bounded unknown-`kid` refresh |
+
+## Revocation SLO
+
+- Registry suspension/retirement, identity suspension/revocation, or instance
+  termination/expiry invalidates an unexpired token on its next authoritative
+  online verification.
+- Credential revocation and authentication quarantine/disable block issuance and
+  fail online verification immediately.
+- Disabling a federation trust revokes an unexpired brokered token on its next
+  online verification.
+- Offline verification is deliberately local and does not enforce revocation.
+
+## Unmet clauses
+
+- A real NOMIVELA 2.0 deployment is exercised only by the opt-in integration
+  test; it is not part of the default CI run.
+- Workload attestation trust and platform evidence are opt-in unless the
+  conforming production profile settings are configured.
+- HSM/KMS custody, multi-region operation and console administration are
+  enterprise (EE) capabilities outside this claim.
 
 ## Verification
 
@@ -62,13 +105,10 @@ anchor distribution and database migration procedure.
   `EIDOVELA_ATTESTATION_REQUIRE_PLATFORM=1` for the conforming production
   workload-attestation profile
 
-## Known limitations
+## Reproducible execution
 
-- The public conformance runner uses a fake Registry. EIDOVELA ships an opt-in
-  integration test (`EIDOVELA_TEST_NOMIVELA_URL`) that provisions a real
-  NOMIVELA 2.0 deployment, but a production deployment must still validate its
-  own service-principal policy, signing keys and migrations.
-- Workload attestation trust and platform evidence are opt-in unless the
-  conforming production profile settings are configured.
-- HSM/KMS custody, multi-region operation and console administration remain
-  enterprise capabilities.
+The public conformance suite runs in CI (`.github/workflows/ci.yml`): it checks
+out this repository, builds the core daemon from `axisrobo/eidovela`, starts the
+in-process NOMIVELA test double, and runs the fixtures with `-count=1`. The
+fixtures, the daemon and the fake registry double are all committed, so the
+result is reproducible.
