@@ -1,6 +1,6 @@
 # Open Distribution Status
 
-**Version:** 2.0.0 | **Contract line:** v2 (Registry Consumer); v1 frozen
+**Version:** 2.1.0 | **Contract line:** v2 (Registry Consumer); v1 frozen
 
 Published: v2 Registry Consumer schemas for the verified Agent context, Registry
 Agent/Instance/Workload views, authentication state and credential lifecycle;

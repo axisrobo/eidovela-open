@@ -1,7 +1,7 @@
 # EIDOVELA 2.0 Conformance Claim
 
 Status: project implementation claim, not a certification  
-Version: 2.0.0  
+Version: 2.1.0  
 Date: 2026-09-28
 
 ## Scope
