@@ -26,7 +26,7 @@ lifecycle records.
 | Credential lifecycle | Credential generation, revocation and authentication quarantine/disable are enforced during online verification. |
 | Discovery | Canonical namespace, signed discovery (when required), registry/JWKS endpoint validation, no-proxy DNS-revalidated retrieval, bounded response and host allowlist checks. |
 | Registry service auth | Static or file-reloaded NOMIVELA service-principal bearer token; namespace-scoped `registry.read`, `instance.commit`, and optional `events.consume`. |
-| Federation | Active trust, signature, audience, time, PoP and mapping validation; disabling trust invalidates brokered local tokens on their next online verification. |
+| Federation | Active trust, signature, audience, time, PoP and mapping validation; disabling trust invalidates brokered local tokens on their next online verification. Peer JWKS retrieval shares the discovery SSRF/DNS-rebinding controls, and federated evidence namespaces the peer subject as `fed:<issuer>/<subject>` with a correlation id instead of a local agent reference. |
 | Event invalidation | Optional cursor replay invalidates bounded Registry caches; authoritative issuance and online verification remain point reads. |
 
 ## Verification
