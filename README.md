@@ -46,6 +46,7 @@ Contents:
 - `examples/` — integration examples
 - `conformance/` — executable threat-scenario fixtures + HTTP runner (`cmd/eidovela-conformance`) driving a live daemon; ships a prebuilt core daemon under `conformance/bin/`
 - `docs/conformance-claim-v2.md` — EIDOVELA 2.0 implementation claim and deployment prerequisites
+- `docs/interoperability.md` — how to run the fixtures and which Agent IAM Series parts they cover
 
 The core server implementation lives in the AGPL repository: <https://github.com/axisrobo/eidovela>
 

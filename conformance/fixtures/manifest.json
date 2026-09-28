@@ -1,0 +1,212 @@
+[
+    {
+        "id":  "N-BR-1",
+        "file":  "N-BR-1.untrusted-broker-denied.json",
+        "part":  "part5-federation",
+        "threat_ref":  "BR2",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-F1-1",
+        "file":  "N-F1-1.unknown-peer-issuer.json",
+        "part":  "part5-federation",
+        "threat_ref":  "F1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-F1-2",
+        "file":  "N-F1-2.disabled-federation-trust.json",
+        "part":  "part5-federation",
+        "threat_ref":  "F1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-F1-3",
+        "file":  "N-F1-3.audience-not-allowed.json",
+        "part":  "part5-federation",
+        "threat_ref":  "F1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-F1-4",
+        "file":  "N-F1-4.expired-federated-token.json",
+        "part":  "part5-federation",
+        "threat_ref":  "F1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-F1-5",
+        "file":  "N-F1-5.unmapped-agent-claim.json",
+        "part":  "part5-federation",
+        "threat_ref":  "F1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-F1-6",
+        "file":  "N-F1-6.unbound-federated-presenter.json",
+        "part":  "part5-federation",
+        "threat_ref":  "F1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-I1-1",
+        "file":  "N-I1-1.terminated-instance-denied.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "I1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-I1-2",
+        "file":  "N-I1-2.terminated-instance-invalidates-token.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "I1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-T1-1",
+        "file":  "N-T1-1.wrong-pop-key.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T1",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-T2-4",
+        "file":  "N-T2-4.spiffe-trust-domain-mismatch.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T2",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-T2-5",
+        "file":  "N-T2-5.kubernetes-serviceaccount-mismatch.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T2",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-T2-6",
+        "file":  "N-T2-6.mtls-client-certificate-selector-mismatch.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T2",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-T4-1",
+        "file":  "N-T4-1.stale-epoch.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T4",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-T4-2",
+        "file":  "N-T4-2.revocation-slo.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T4",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-T7-1",
+        "file":  "N-T7-1.exchange-audience-widening.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T7",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "N-T8-1",
+        "file":  "N-T8-1.cross-audience-introspect.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T8",
+        "expectation":  "deny"
+    },
+    {
+        "id":  "P-BR-1",
+        "file":  "P-BR-1.broker-issued-local-token.json",
+        "part":  "part5-federation",
+        "threat_ref":  "BR1",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-F1-1",
+        "file":  "P-F1-1.valid-federated-introspect.json",
+        "part":  "part5-federation",
+        "threat_ref":  "F1",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-I1-1",
+        "file":  "P-I1-1.leased-instance-issues.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "I1",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-O1-1",
+        "file":  "P-O1-1.read-projections.json",
+        "part":  "part2-registry",
+        "threat_ref":  "O1",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-O3-1",
+        "file":  "P-O3-1.evidence-since.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "O3",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-O4-1",
+        "file":  "P-O4-1.agent-detail.json",
+        "part":  "part2-registry",
+        "threat_ref":  "O4",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-O5-1",
+        "file":  "P-O5-1.instance-projection.json",
+        "part":  "part2-registry",
+        "threat_ref":  "O5",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-O8-1",
+        "file":  "P-O8-1.outbox-events.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "O8",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-T1-1",
+        "file":  "P-T1-1.valid-twin-pop.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T1",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-T2-1",
+        "file":  "P-T2-1.valid-spiffe-enroll.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T2",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-T2-2",
+        "file":  "P-T2-2.valid-kubernetes-enroll.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T2",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-T2-3",
+        "file":  "P-T2-3.valid-mtls-enroll.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T2",
+        "expectation":  "allow"
+    },
+    {
+        "id":  "P-T7-1",
+        "file":  "P-T7-1.valid-exchange.json",
+        "part":  "part3-authentication",
+        "threat_ref":  "T7",
+        "expectation":  "allow"
+    }
+]
