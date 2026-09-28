@@ -40,11 +40,12 @@ This repository (`eidovela-open`, Apache-2.0) is the public, developer-facing di
 
 Contents:
 
-- `contracts/` — versioned public contract schemas (v1 stable; v1alpha1 retained)
+- `contracts/` — versioned public contract schemas (v2 Registry Consumer default; v1 frozen; v1alpha1 retained)
 - `sdk/go` — Go SDK (HTTP client, Ed25519 PoP key generation, offline JWT/JWKS verification, RFC 8693 token-exchange profile)
 - `cli/` — command-line tool
 - `examples/` — integration examples
 - `conformance/` — executable threat-scenario fixtures + HTTP runner (`cmd/eidovela-conformance`) driving a live daemon; ships a prebuilt core daemon under `conformance/bin/`
+- `docs/conformance-claim-v2.md` — EIDOVELA 2.0 implementation claim and deployment prerequisites
 
 The core server implementation lives in the AGPL repository: <https://github.com/axisrobo/eidovela>
 
@@ -55,6 +56,8 @@ The core server implementation lives in the AGPL repository: <https://github.com
 - OIDC discovery & JWKS
 - Federation trust administration and verified-downstream introspection
   (`contracts/v1/federation-profile.md`)
+- NOMIVELA v2 Registry Consumer context, dual epochs, scoped service principals,
+  signed discovery and idempotent instance commit (`contracts/v2/README.md`)
 
 ---
 
@@ -66,16 +69,16 @@ The core server implementation lives in the AGPL repository: <https://github.com
 
 ## Quick start — local loop
 
-Start the core daemon, then run the public example:
+Run the consumer-mode conformance suite with its in-process NOMIVELA Registry
+test double:
 
 ```text
-eidovelad
-go run ./examples/local-loop
+go run ./cmd/eidovela-conformance
 ```
 
-The example registers a Service Agent, registers a workload profile, completes
-`private_key_jwt` enrollment, activates the Agent, obtains a short-lived
-PoP-bound token, then authoritatively introspects it.
+Production deployments register the Agent, Agent ID, Authority Binding, Workload
+Registration and Instance through NOMIVELA. EIDOVELA completes `private_key_jwt`
+PoP-bound token and authoritatively introspects it.
 
 Enrollment supplies workload attributes that must exactly match every selector
 on the registered workload profile; callers cannot bypass workload binding by
@@ -88,5 +91,5 @@ introspection.
 ---
 
 - License: Apache-2.0
-- Module: `github.com/axisrobo/eidovela-open`
+- Module: `github.com/axisrobo/eidovela-open/v2`
 - Distribution governance: `STATUS.md`, `COMPATIBILITY.md` and `contracts/README.md`
