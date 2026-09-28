@@ -64,8 +64,10 @@ anchor distribution and database migration procedure.
 
 ## Known limitations
 
-- The public conformance runner uses a fake Registry; it does not replace an
-  end-to-end run against a production NOMIVELA 2.0 deployment.
+- The public conformance runner uses a fake Registry. EIDOVELA ships an opt-in
+  integration test (`EIDOVELA_TEST_NOMIVELA_URL`) that provisions a real
+  NOMIVELA 2.0 deployment, but a production deployment must still validate its
+  own service-principal policy, signing keys and migrations.
 - Workload attestation trust and platform evidence are opt-in unless the
   conforming production profile settings are configured.
 - HSM/KMS custody, multi-region operation and console administration remain
