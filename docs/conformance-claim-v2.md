@@ -65,8 +65,10 @@ lifecycle records.
 
 ## Unmet clauses
 
-- A real NOMIVELA 2.0 deployment is exercised only by the opt-in integration
-  test; it is not part of the default CI run.
+- A real NOMIVELA 2.0 deployment is exercised by the opt-in integration test and
+  by the core CI `real-registry` job, which starts NOMIVELA against PostgreSQL
+  with a scoped service principal. A production deployment must still validate
+  its own signing keys, migrations and principal policy.
 - Workload attestation trust and platform evidence are opt-in unless the
   conforming production profile settings are configured.
 - HSM/KMS custody, multi-region operation and console administration are
