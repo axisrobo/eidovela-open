@@ -1,23 +1,20 @@
-# eidovela-core daemon binary (for conformance)
+# eidovela core daemon binary (for conformance)
 
-`eidovelad.exe` is a prebuilt Windows binary of the EIDOVELA **core** issuer
-(`github.com/axisrobo/eidovela`, AGPL-3.0-or-later). It is committed here so
-the executable conformance runner (`cmd/eidovela-conformance`) and local CI can
-drive a live daemon without requiring a separate checkout of the core
-repository.
+The executable conformance runner (`cmd/eidovela-conformance`) and the fixture
+suite drive a live EIDOVELA **core** issuer daemon
+(`github.com/axisrobo/eidovela`, AGPL-3.0-or-later) from this directory.
 
-## Provenance and license
+The binary is **not** committed. This directory is gitignored; the conformance
+scripts and CI build the daemon here on demand, so a separate core checkout is
+required only to run the suite, not to build this repository.
 
-- Source: <https://github.com/axisrobo/eidovela>
-- Built from the version tagged alongside this distribution (see `VERSION`).
-- The binary is licensed under **AGPL-3.0-or-later**. Redistribution must comply
-  with that license. This Apache-2.0 repository includes it solely to run the
-  conformance scenarios against an authoritative implementation.
+## License
 
-## Building for another platform
+The daemon is licensed under **AGPL-3.0-or-later**. This Apache-2.0 repository
+builds it solely to run the conformance scenarios against an authoritative
+implementation. No AGPL binary is redistributed.
 
-The committed binary is built for Windows. To run conformance on Linux/macOS,
-build the daemon for the current platform and place it at `conformance/bin/`:
+## Building
 
 ```text
 # from a checkout of github.com/axisrobo/eidovela (backend/)
@@ -25,4 +22,5 @@ go build -o ../../eidovela-open/conformance/bin/eidovelad ./cmd/eidovelad
 ```
 
 `conformance/scripts/ci` (Linux/macOS) and `conformance/scripts/ci.ps1`
-(Windows) build the daemon automatically when the platform binary is absent.
+(Windows) build the daemon automatically when the platform binary is absent,
+and the runner skips cleanly when no binary is present.
