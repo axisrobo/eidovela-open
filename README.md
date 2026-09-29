@@ -44,7 +44,7 @@ Contents:
 - `sdk/go` — Go SDK (HTTP client, Ed25519 PoP key generation, offline JWT/JWKS verification, RFC 8693 token-exchange profile)
 - `cli/` — command-line tool
 - `examples/` — integration examples
-- `conformance/` — executable threat-scenario fixtures + HTTP runner (`cmd/eidovela-conformance`) driving a live daemon; ships a prebuilt core daemon under `conformance/bin/`
+- `conformance/` — executable threat-scenario fixtures + HTTP runner (`cmd/eidovela-conformance`) driving a live daemon; the core daemon is built on demand (not committed)
 - `docs/conformance-claim-v2.md` — EIDOVELA 2.0 implementation claim and deployment prerequisites
 - `docs/interoperability.md` — how to run the fixtures and which Agent IAM Series parts they cover
 

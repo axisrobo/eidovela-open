@@ -8,7 +8,7 @@ and what a passing run does and does not prove.
 
 | Item | Version |
 |---|---|
-| EIDOVELA | 2.2.0 |
+| EIDOVELA | 2.2.1 |
 | Public contracts | `contracts/v2` (Registry Consumer); `contracts/v1` frozen |
 | NOMIVELA Agent Registry contract | `agent-registry-v1.0` |
 | NOMIVELA SDK | `github.com/axisrobo/nomivela-open/v2` |
