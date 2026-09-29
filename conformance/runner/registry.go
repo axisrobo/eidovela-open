@@ -23,22 +23,22 @@ type FakeRegistry struct {
 
 	namespace string
 
-	agentRef         string
-	agentClass       string
-	agentState       string
-	agentEpoch       int64
-	sponsorRef       string
-	agentID          string
-	identityState    string
-	identityEpoch    int64
-	authorityRootRef string
+	agentRef          string
+	agentClass        string
+	agentState        string
+	agentEpoch        int64
+	sponsorRef        string
+	agentID           string
+	identityState     string
+	identityEpoch     int64
+	authorityRootRef  string
 	authorityRootType string
 
-	workloads      map[string]fakeWorkload
-	workloadOrder  []string
-	instances      map[string]fakeInstance
-	instanceOrder  []string
-	sequence       int
+	workloads     map[string]fakeWorkload
+	workloadOrder []string
+	instances     map[string]fakeInstance
+	instanceOrder []string
+	sequence      int
 
 	listener net.Listener
 	server   *http.Server
@@ -46,13 +46,13 @@ type FakeRegistry struct {
 }
 
 type fakeWorkload struct {
-	id         string
-	platform   string
-	selector   map[string]string
+	id          string
+	platform    string
+	selector    map[string]string
 	trustDomain string
-	methods    []string
-	status     string
-	epoch      int64
+	methods     []string
+	status      string
+	epoch       int64
 }
 
 type fakeInstance struct {
@@ -77,10 +77,10 @@ func StartFakeRegistry(namespace string) (*FakeRegistry, error) {
 		return nil, err
 	}
 	r := &FakeRegistry{
-		namespace:  namespace,
-		workloads:  map[string]fakeWorkload{},
-		instances:  map[string]fakeInstance{},
-		listener:   listener,
+		namespace: namespace,
+		workloads: map[string]fakeWorkload{},
+		instances: map[string]fakeInstance{},
+		listener:  listener,
 	}
 	r.baseURL = "http://" + listener.Addr().String()
 	r.server = &http.Server{Handler: r}

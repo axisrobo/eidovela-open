@@ -382,8 +382,8 @@ func (s *scenarioState) cursorPageAgents() error {
 func (s *scenarioState) listAgents() error {
 	var envelope struct {
 		Agents []struct {
-			AgentID   string `json:"agent_id"`
-			AgentEpoch int64 `json:"agent_epoch"`
+			AgentID    string `json:"agent_id"`
+			AgentEpoch int64  `json:"agent_epoch"`
 		} `json:"agents"`
 	}
 	if err := s.get("/v1/registry/agents", &envelope); err != nil {
