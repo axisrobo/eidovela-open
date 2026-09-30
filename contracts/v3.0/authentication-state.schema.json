@@ -4,7 +4,7 @@
   "title": "AuthenticationState",
   "description": "EIDOVELA-owned authentication state for one Agent Identity. Absence of a record means the derived default applies.",
   "type": "object",
-  "required": ["agentId", "authenticationState", "credentialGeneration", "updated_at"],
+  "required": ["agentId", "authenticationState", "credentialGeneration", "updatedAt"],
   "properties": {
     
     "agentId": { "type": "string", "minLength": 1 },
@@ -13,7 +13,7 @@
     },
     "credentialGeneration": { "type": "integer", "minimum": 0 },
     "reason": { "type": "string", "maxLength": 512 },
-    "updated_at": { "type": "string", "format": "date-time" }
+    "updatedAt": { "type": "string", "format": "date-time" }
   },
   "additionalProperties": true
 }

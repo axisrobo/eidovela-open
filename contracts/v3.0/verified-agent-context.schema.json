@@ -1,4 +1,4 @@
-{
+﻿{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/verified-agent-context.schema.json",
   "title": "VerifiedAgentIdentityContext",
@@ -25,7 +25,7 @@
       "description": "Normalized EIDOVELA class.",
       "enum": ["twin", "service", "ephemeral"]
     },
-    "registry_class": {
+    "registryClass": {
       "description": "Raw NOMIVELA agent_class, for traceability.",
       "type": "string"
     },
@@ -70,3 +70,4 @@
     }
   }
 }
+

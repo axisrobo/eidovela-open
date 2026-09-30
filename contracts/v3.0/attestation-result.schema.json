@@ -7,25 +7,25 @@
   "required": [
     "attestationRef",
     "agentId",
-    "enrollment_id",
+    "enrollmentId",
     "method",
-    "verifier_identity",
-    "evidence_digest",
-    "attributes_digest",
-    "created_at"
+    "verifierIdentity",
+    "evidenceDigest",
+    "attributesDigest",
+    "createdAt"
   ],
   "properties": {
     "attestationRef": { "type": "string", "minLength": 1 },
     
     "agentId": { "type": "string", "minLength": 1 },
-    "enrollment_id": { "type": "string", "minLength": 1 },
+    "enrollmentId": { "type": "string", "minLength": 1 },
     "method": {
       "enum": ["private_key_jwt", "spiffe_svid", "k8s_projected_sa", "mtls"]
     },
-    "verifier_identity": { "type": "string", "minLength": 1 },
-    "evidence_digest": { "type": "string", "pattern": "^sha256:" },
-    "attributes_digest": { "type": "string", "pattern": "^sha256:" },
-    "created_at": { "type": "string", "format": "date-time" }
+    "verifierIdentity": { "type": "string", "minLength": 1 },
+    "evidenceDigest": { "type": "string", "pattern": "^sha256:" },
+    "attributesDigest": { "type": "string", "pattern": "^sha256:" },
+    "createdAt": { "type": "string", "format": "date-time" }
   },
   "additionalProperties": false
 }
