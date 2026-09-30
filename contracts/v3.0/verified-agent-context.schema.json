@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/verified-agent-context.schema.json",
+  "title": "VerifiedAgentIdentityContext",
+  "description": "Profile-neutral verified Agent identity context returned by GET /v1/verified-agent-context for AEGIVELA and product PEPs.",
+  "type": "object",
+  "required": [
+    "namespace",
+    "agentRef",
+    "agentId",
+    "agentClass",
+    "agentState",
+    "identityState",
+    "agentEpoch",
+    "identityEpoch",
+    "tokenable",
+    "issuer"
+  ],
+  "properties": {
+    
+    "namespace": { "type": "string", "format": "uri" },
+    "agentRef": { "type": "string", "minLength": 1 },
+    "agentId": { "type": "string", "minLength": 1 },
+    "agentClass": {
+      "description": "Normalized EIDOVELA class.",
+      "enum": ["twin", "service", "ephemeral"]
+    },
+    "registry_class": {
+      "description": "Raw NOMIVELA agent_class, for traceability.",
+      "type": "string"
+    },
+    "agentState": {
+      "enum": ["draft", "registered", "approved", "active", "suspended", "retired"]
+    },
+    "identityState": {
+      "enum": ["allocated", "bound", "active", "suspended", "revoked"]
+    },
+    "agentEpoch": { "type": "integer", "minimum": 1 },
+    "identityEpoch": { "type": "integer", "minimum": 1 },
+    "authorityRootRef": { "type": "string" },
+    "sponsorRef": { "type": "string" },
+    "tokenable": {
+      "description": "True only when both registry states permit a new identity token.",
+      "type": "boolean"
+    },
+    "issuer": { "type": "string", "format": "uri" },
+    "instance": { "$ref": "#/$defs/instance" }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "instance": {
+      "type": "object",
+      "required": ["instanceId", "agentId", "state", "generation", "tokenable"],
+      "properties": {
+        "instanceId": { "type": "string", "minLength": 1 },
+        "namespace": { "type": "string", "format": "uri" },
+        "agentId": { "type": "string", "minLength": 1 },
+        "workloadRegistrationId": { "type": "string" },
+        "workloadId": { "type": "string" },
+        "artifactDigest": { "type": "string" },
+        "attestationRef": { "type": "string" },
+        "leaseExpiresAt": { "type": "string", "format": "date-time" },
+        "state": {
+          "enum": ["pending", "active", "quarantined", "terminated", "expired"]
+        },
+        "generation": { "type": "integer", "minimum": 1 },
+        "tokenable": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

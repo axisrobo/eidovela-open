@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/authentication-state.schema.json",
+  "title": "AuthenticationState",
+  "description": "EIDOVELA-owned authentication state for one Agent Identity. Absence of a record means the derived default applies.",
+  "type": "object",
+  "required": ["agentId", "authenticationState", "credentialGeneration", "updated_at"],
+  "properties": {
+    
+    "agentId": { "type": "string", "minLength": 1 },
+    "authenticationState": {
+      "enum": ["unenrolled", "challenged", "attested", "credentialed", "active", "quarantined", "disabled"]
+    },
+    "credentialGeneration": { "type": "integer", "minimum": 0 },
+    "reason": { "type": "string", "maxLength": 512 },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": true
+}

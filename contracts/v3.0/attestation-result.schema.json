@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/attestation-result.schema.json",
+  "title": "AttestationResult",
+  "description": "Sanitized EIDOVELA record of the evidence that bound a workload to an Agent Instance. Raw certificates, projected tokens, private keys and unrestricted attributes are never present.",
+  "type": "object",
+  "required": [
+    "attestationRef",
+    "agentId",
+    "enrollment_id",
+    "method",
+    "verifier_identity",
+    "evidence_digest",
+    "attributes_digest",
+    "created_at"
+  ],
+  "properties": {
+    "attestationRef": { "type": "string", "minLength": 1 },
+    
+    "agentId": { "type": "string", "minLength": 1 },
+    "enrollment_id": { "type": "string", "minLength": 1 },
+    "method": {
+      "enum": ["private_key_jwt", "spiffe_svid", "k8s_projected_sa", "mtls"]
+    },
+    "verifier_identity": { "type": "string", "minLength": 1 },
+    "evidence_digest": { "type": "string", "pattern": "^sha256:" },
+    "attributes_digest": { "type": "string", "pattern": "^sha256:" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

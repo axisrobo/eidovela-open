@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/registry-agent.schema.json",
+  "title": "RegistryAgentView",
+  "description": "Read-only EIDOVELA projection of a NOMIVELA Agent Record joined with its Agent Identity Record.",
+  "type": "object",
+  "required": [
+    "namespace",
+    "agentRef",
+    "agentId",
+    "agentClass",
+    "agentState",
+    "identityState",
+    "agentEpoch",
+    "identityEpoch",
+    "tokenable"
+  ],
+  "properties": {
+    
+    "namespace": { "type": "string", "format": "uri" },
+    "agentRef": { "type": "string", "minLength": 1 },
+    "agentId": { "type": "string", "minLength": 1 },
+    "agentClass": { "enum": ["twin", "service", "ephemeral"] },
+    "agentState": {
+      "enum": ["draft", "registered", "approved", "active", "suspended", "retired"]
+    },
+    "identityState": {
+      "enum": ["allocated", "bound", "active", "suspended", "revoked"]
+    },
+    "agentEpoch": { "type": "integer", "minimum": 1 },
+    "identityEpoch": { "type": "integer", "minimum": 1 },
+    "authorityRootRef": { "type": "string" },
+    "sponsorRef": { "type": "string" },
+    "tokenable": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}
