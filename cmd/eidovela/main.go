@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	server := flag.String("server", "http://localhost:8080", "EIDOVELA server URL")
+	server := flag.String("server", "http://localhost:1966", "EIDOVELA server URL")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 1 {

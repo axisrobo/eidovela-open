@@ -11,7 +11,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	client := eidovela.NewClient("http://localhost:8080")
+	client := eidovela.NewClient("http://localhost:1966")
 	_, privateKey, err := eidovela.GeneratePoPKey()
 	if err != nil {
 		log.Fatal(err)
