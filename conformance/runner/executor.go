@@ -325,8 +325,8 @@ func (s *scenarioState) suspendWithReason(step Step) error {
 func (s *scenarioState) evidenceLifecycleReason(step Step) error {
 	var envelope struct {
 		Evidence []struct {
-			Type   string `json:"event_type"`
-			Agent  string `json:"agent_id"`
+			Type   string `json:"eventType"`
+			Agent  string `json:"agentId"`
 			Reason string `json:"reason"`
 		} `json:"evidence"`
 	}
@@ -382,8 +382,8 @@ func (s *scenarioState) cursorPageAgents() error {
 func (s *scenarioState) listAgents() error {
 	var envelope struct {
 		Agents []struct {
-			AgentID    string `json:"agent_id"`
-			AgentEpoch int64  `json:"agent_epoch"`
+			AgentID    string `json:"agentId"`
+			AgentEpoch int64  `json:"agentEpoch"`
 		} `json:"agents"`
 	}
 	if err := s.get("/v1/registry/agents", &envelope); err != nil {
@@ -400,7 +400,7 @@ func (s *scenarioState) listAgents() error {
 func (s *scenarioState) evidenceEvents() error {
 	var envelope struct {
 		Evidence []struct {
-			Type string `json:"event_type"`
+			Type string `json:"eventType"`
 		} `json:"evidence"`
 	}
 	if err := s.get("/v1/evidence", &envelope); err != nil {
@@ -418,12 +418,12 @@ func (s *scenarioState) evidenceEvents() error {
 
 func (s *scenarioState) agentDetail() error {
 	var context struct {
-		AgentID       string `json:"agent_id"`
-		AgentEpoch    int64  `json:"agent_epoch"`
-		IdentityEpoch int64  `json:"identity_epoch"`
+		AgentID       string `json:"agentId"`
+		AgentEpoch    int64  `json:"agentEpoch"`
+		IdentityEpoch int64  `json:"identityEpoch"`
 		Tokenable     bool   `json:"tokenable"`
 	}
-	if err := s.get("/v1/verified-agent-context?agent_id="+url.QueryEscape(s.agentID), &context); err != nil {
+	if err := s.get("/v1/verified-agent-context?agentId="+url.QueryEscape(s.agentID), &context); err != nil {
 		return err
 	}
 	if context.AgentID != s.agentID || context.AgentEpoch < 1 || context.IdentityEpoch < 1 {
@@ -436,7 +436,7 @@ func (s *scenarioState) evidenceSince() error {
 	since := time.Now().Add(-time.Hour).UTC().Format(time.RFC3339)
 	var envelope struct {
 		Evidence []struct {
-			Type string `json:"event_type"`
+			Type string `json:"eventType"`
 		} `json:"evidence"`
 	}
 	if err := s.get("/v1/evidence?since="+url.QueryEscape(since), &envelope); err != nil {
@@ -456,7 +456,7 @@ func (s *scenarioState) instancesLeaseProjection() error {
 	}
 	var envelope struct {
 		Instances []struct {
-			InstanceID string `json:"instance_id"`
+			InstanceID string `json:"instanceId"`
 			State      string `json:"state"`
 			Tokenable  bool   `json:"tokenable"`
 		} `json:"instances"`
@@ -487,9 +487,9 @@ func (s *scenarioState) outboxStatus() error {
 func (s *scenarioState) outboxEventsList() error {
 	var envelope struct {
 		Events []struct {
-			EventID string `json:"event_id"`
+			EventID string `json:"eventId"`
 			Topic   string `json:"topic"`
-			Agent   string `json:"agent_id"`
+			Agent   string `json:"agentId"`
 			State   string `json:"state"`
 		} `json:"events"`
 	}
@@ -531,11 +531,11 @@ func (s *scenarioState) registerWorkload(step Step) error {
 	s.regID = s.ex.Registry.AddWorkload(*step.Workload)
 	// Create the enrollment challenge.
 	var challenge struct {
-		ID      string `json:"enrollment_id"`
-		AgentID string `json:"agent_id"`
+		ID      string `json:"enrollmentId"`
+		AgentID string `json:"agentId"`
 		Nonce   string `json:"nonce"`
 	}
-	if err := s.post("/v1/enrollments", map[string]string{"agent_id": s.agentID, "workload_registration_id": s.regID}, &challenge); err != nil {
+	if err := s.post("/v1/enrollments", map[string]string{"agentId": s.agentID, "workloadRegistrationId": s.regID}, &challenge); err != nil {
 		return err
 	}
 	s.challengeID = challenge.ID
@@ -557,9 +557,9 @@ func (s *scenarioState) completeEnrollment(step Step) error {
 		attributes = map[string]string{}
 	}
 	body := map[string]any{
-		"enrollment_id": s.challengeID, "proof_jwt": proof,
-		"public_key": jwk(pub), "runtime": "praxovela", "workload_id": "wl_conformance",
-		"workload_attributes": attributes,
+		"enrollmentId": s.challengeID, "proofJwt": proof,
+		"publicKey": jwk(pub), "runtime": "praxovela", "workloadId": "wl_conformance",
+		"workloadAttributes": attributes,
 	}
 	attestation, err := s.buildAttestation(step.Attestation, pub, priv)
 	if err != nil {
@@ -569,7 +569,7 @@ func (s *scenarioState) completeEnrollment(step Step) error {
 		body["attestation"] = attestation
 	}
 	var instance struct {
-		InstanceID string `json:"instance_id"`
+		InstanceID string `json:"instanceId"`
 	}
 	if err := s.post("/v1/enrollments/complete", body, &instance); err != nil {
 		return err
@@ -598,8 +598,8 @@ func (s *scenarioState) issueToken(step Step) error {
 		Token string `json:"token"`
 	}
 	body := map[string]any{
-		"agent_id": s.agentID, "instance_id": s.instanceID, "audience": audience,
-		"public_key": jwk(s.mainPub), "proof_jwt": proof,
+		"agentId": s.agentID, "instanceId": s.instanceID, "audience": audience,
+		"publicKey": jwk(s.mainPub), "proofJwt": proof,
 	}
 	if err := s.post("/oauth2/token", body, &token); err != nil {
 		return err
@@ -623,7 +623,7 @@ func (s *scenarioState) introspect(step Step) (bool, error) {
 	var response struct {
 		Active bool `json:"active"`
 	}
-	if err := s.post("/v1/introspect", map[string]any{"token": s.issuedToken, "audience": audience, "public_key": jwk(key)}, &response); err != nil {
+	if err := s.post("/v1/introspect", map[string]any{"token": s.issuedToken, "audience": audience, "publicKey": jwk(key)}, &response); err != nil {
 		return false, err
 	}
 	return response.Active, nil
@@ -645,8 +645,8 @@ func (s *scenarioState) exchange(step Step) error {
 		Token string `json:"token"`
 	}
 	body := map[string]any{
-		"subject_token": s.issuedToken, "parent_audience": parentAudience,
-		"requested_audience": requested, "public_key": jwk(s.mainPub),
+		"subjectToken": s.issuedToken, "parentAudience": parentAudience,
+		"requestedAudience": requested, "publicKey": jwk(s.mainPub),
 	}
 	if err := s.post("/v1/token/exchange", body, &exchanged); err != nil {
 		return err
@@ -675,7 +675,7 @@ func (s *scenarioState) registerFederationTrust(step Step) error {
 	}
 	body := map[string]any{
 		"issuer": config.Issuer, "jwks_uri": peer.JWKSURL(),
-		"claim_mappings": config.ClaimMappings, "allowed_audiences": config.AllowedAudiences,
+		"claimMappings": config.ClaimMappings, "allowed_audiences": config.AllowedAudiences,
 		"status": config.Status,
 	}
 	return s.post("/v1/federation/trusts", body, &trust)
@@ -707,7 +707,7 @@ func (s *scenarioState) brokerIssue(step Step) error {
 		Token string `json:"token"`
 	}
 	body := map[string]any{
-		"token": s.issuedToken, "audience": audience, "public_key": jwk(s.mainPub),
+		"token": s.issuedToken, "audience": audience, "publicKey": jwk(s.mainPub),
 	}
 	if err := s.post("/v1/broker/issue", body, &issued); err != nil {
 		return err
@@ -779,7 +779,7 @@ func (s *scenarioState) buildAttestation(att *Attest, pub ed25519.PublicKey, pri
 		if err != nil {
 			return nil, err
 		}
-		return map[string]any{"method": "mtls", "certificate_pem": pemCert}, nil
+		return map[string]any{"method": "mtls", "certificatePem": pemCert}, nil
 	case "spiffe_svid":
 		pemCert, err := selfSignedPEM(att.SubjectCN, att.DNSNames, false, time.Now())
 		if err != nil {
@@ -792,7 +792,7 @@ func (s *scenarioState) buildAttestation(att *Attest, pub ed25519.PublicKey, pri
 				return nil, err
 			}
 		}
-		return map[string]any{"method": "spiffe_svid", "certificate_pem": pemCert}, nil
+		return map[string]any{"method": "spiffe_svid", "certificatePem": pemCert}, nil
 	case "k8s_projected_sa":
 		token, err := s.k8sToken(att, priv)
 		if err != nil {

@@ -14,7 +14,7 @@
         "federation": {
           "issuer": "https://peer.example.test",
           "allowed_audiences": ["aegivela"],
-          "claim_mappings": { "agent_id": "subject" },
+          "claim_mappings": { "agentId": "subject" },
           "status": "active"
         }
       },

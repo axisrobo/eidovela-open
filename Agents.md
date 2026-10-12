@@ -11,7 +11,11 @@ EIDOVELA is a native **Agent Identity Provider (IdP)** for agent-based private-c
 - **Credential lifecycle**: credential generations, revocation and authentication quarantine/disable.
 - **Federation foundation**: verified downstream trust and broker issuance.
 
-Public contracts for this model are in [`contracts/v2`](contracts/v2/README.md); `contracts/v1` is frozen for existing consumers.
+Public contracts for this model are in [`contracts/v3.0`](contracts/v3.0/README.md)
+(lowerCamelCase); [`contracts/v2`](contracts/v2/README.md) and `contracts/v1` are
+frozen for existing consumers. The current Go client is
+[`sdk/go/eidovela/v3`](sdk/go/eidovela/v3) (lowerCamelCase); `sdk/go/eidovela` is
+the frozen v2 snake_case client.
 
 ## Repositories
 

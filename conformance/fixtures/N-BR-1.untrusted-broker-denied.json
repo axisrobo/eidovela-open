@@ -14,7 +14,7 @@
         "federation": {
           "issuer": "https://peer.example.test",
           "allowed_audiences": ["aegivela"],
-          "claim_mappings": { "agent_id": "sub" }
+          "claim_mappings": { "agentId": "sub" }
         }
       },
       { "op": "issue_peer_token", "federation_issuer": "https://stranger.example.test", "audience": "aegivela", "expect": "ok" },

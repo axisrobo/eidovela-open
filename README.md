@@ -40,8 +40,8 @@ This repository (`eidovela-open`, Apache-2.0) is the public, developer-facing di
 
 Contents:
 
-- `contracts/` — versioned public contract schemas (v2 Registry Consumer default; v1 frozen; v1alpha1 retained)
-- `sdk/go` — Go SDK (HTTP client, Ed25519 PoP key generation, offline JWT/JWKS verification, RFC 8693 token-exchange profile)
+- `contracts/` — versioned public contract schemas (v3.0 lowerCamelCase Registry Consumer line; v2 Registry Consumer frozen; v1 frozen; v1alpha1 retained)
+- `sdk/go` — Go SDK. `sdk/go/eidovela/v3` is the current lowerCamelCase client for the v3.0 daemon (enrollment, PoP token, introspection + token-bound context, DPoP signing, registry reads, federation, brokered issuance); `sdk/go/eidovela` is the frozen v2 snake_case client.
 - `cli/` — command-line tool
 - `examples/` — integration examples
 - `conformance/` — executable threat-scenario fixtures + HTTP runner (`cmd/eidovela-conformance`) driving a live daemon; the core daemon is built on demand (not committed)
@@ -57,8 +57,10 @@ The core server implementation lives in the AGPL repository: <https://github.com
 - OIDC discovery & JWKS
 - Federation trust administration and verified-downstream introspection
   (`contracts/v1/federation-profile.md`)
-- NOMIVELA v2 Registry Consumer context, dual epochs, scoped service principals,
-  signed discovery and idempotent instance commit (`contracts/v2/README.md`)
+- NOMIVELA Registry Consumer context, dual epochs, scoped service principals,
+  signed discovery and idempotent instance commit (`contracts/v3.0/README.md`,
+  `contracts/v2/README.md`)
+- Proof-of-possession presentation candidate FP-1 (`contracts/v3.0/federated-presentation.md`)
 
 ---
 

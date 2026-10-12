@@ -14,7 +14,7 @@
         "federation": {
           "issuer": "https://peer.example.test",
           "allowed_audiences": ["eidovela:console"],
-          "claim_mappings": { "agent_id": "sub" },
+          "claim_mappings": { "agentId": "sub" },
           "status": "active"
         }
       },

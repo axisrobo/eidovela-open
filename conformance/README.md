@@ -49,7 +49,9 @@ go build -o ../eidovela-open/conformance/bin/eidovelad ./cmd/eidovelad
 ```
 
 The runner only talks HTTP and depends only on the Go SDK (no AGPL core import),
-so it stays within the Apache-2.0 dependency boundary.
+so it stays within the Apache-2.0 dependency boundary. It speaks the v3.0
+lowerCamelCase wire, so the daemon binary must be built from current core (the
+`eidovelad` authoring endpoints are retired and the wire fields are camelCase).
 
 ## Run
 

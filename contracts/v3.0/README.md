@@ -46,6 +46,13 @@ are in `token-context-introspection.schema.json`. This candidate is not a claim
 of PRAXOVELA/LIMENORA production conformance; gateway transport and end-to-end
 acceptance remain release gates. Existing contracts above are not reinterpreted.
 
+## SDK
+
+The Go client for this line is
+[`sdk/go/eidovela/v3`](../../sdk/go/eidovela/v3). The frozen
+[`sdk/go/eidovela`](../../sdk/go/eidovela) package targets the v2 snake_case wire
+and is unchanged.
+
 ## Stability
 
 `v3.0` is a new, incompatible contract line. Within `v3.0`, additive evolution is

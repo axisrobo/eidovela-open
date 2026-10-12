@@ -45,6 +45,7 @@ func (p *PeerIssuer) serveJWKS(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	var keys []map[string]any
