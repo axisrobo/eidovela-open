@@ -1,0 +1,12 @@
+[
+  { "id": "P-FP1-context", "mode": "valid", "status": 200, "active": true },
+  { "id": "N-FP1-key-only", "mode": "key-only", "status": 401, "active": false },
+  { "id": "N-FP1-resource-retarget", "mode": "resource-target", "status": 401, "active": false },
+  { "id": "N-FP1-token-hash", "mode": "token-hash", "status": 401, "active": false },
+  { "id": "N-FP1-stale", "mode": "stale", "status": 401, "active": false },
+  { "id": "N-FP1-key-mismatch", "mode": "wrong-key", "status": 200, "active": false },
+  { "id": "N-FP1-replay", "mode": "replay", "status": 401, "active": false },
+  { "id": "N-FP1-missing-type", "mode": "missing-type", "status": 200, "active": false },
+  { "id": "N-FP1-missing-subject", "mode": "missing-subject", "status": 200, "active": false },
+  { "id": "N-FP1-stale-epoch", "mode": "stale-epoch", "status": 200, "active": false }
+]

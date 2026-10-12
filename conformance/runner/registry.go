@@ -31,6 +31,8 @@ type FakeRegistry struct {
 	agentID           string
 	identityState     string
 	identityEpoch     int64
+	identityType      string
+	subjectRef        string
 	authorityRootRef  string
 	authorityRootType string
 
@@ -114,9 +116,18 @@ func (r *FakeRegistry) SeedAgent(class, bindingType, authorityRootRef string) st
 	r.agentID = fmt.Sprintf("%08d-0000-0000-0000-000000000000", r.sequence)
 	r.identityState = "active"
 	r.identityEpoch = 1
+	r.identityType, r.subjectRef = "", ""
 	r.authorityRootRef = authorityRootRef
 	r.authorityRootType = bindingType
 	return r.agentID
+}
+
+// SetIdentityAttributes seeds authoritative test-registry attributes explicitly;
+// it never derives identity type from Agent class or authority binding.
+func (r *FakeRegistry) SetIdentityAttributes(identityType, subjectRef string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.identityType, r.subjectRef = identityType, subjectRef
 }
 
 // AddWorkload registers an approved workload and returns its registration ID.
@@ -221,6 +232,7 @@ func (r *FakeRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		items := []map[string]any{{
 			"namespace": r.namespace, "agentId": r.agentID, "agentRef": r.agentRef,
 			"state": r.identityState, "identityEpoch": r.identityEpoch,
+			"identityType": r.identityType, "subjectRef": r.subjectRef,
 			"authorityRootRef": r.authorityRootRef, "authorityRootType": r.authorityRootType,
 		}}
 		r.mu.Unlock()
@@ -324,6 +336,7 @@ func (r *FakeRegistry) identityJSON() map[string]any {
 	return map[string]any{
 		"namespace": r.namespace, "agentId": r.agentID, "agentRef": r.agentRef,
 		"state": r.identityState, "identityEpoch": r.identityEpoch,
+		"identityType": r.identityType, "subjectRef": r.subjectRef,
 		"authorityRootRef": r.authorityRootRef, "authorityRootType": r.authorityRootType,
 	}
 }

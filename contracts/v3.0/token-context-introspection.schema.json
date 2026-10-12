@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/token-context-introspection.schema.json",
+  "title": "TokenContextIntrospectionResponse",
+  "description": "Candidate FP-1 opt-in POST /v1/introspect response; not the GET registry context.",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["active"],
+      "properties": { "active": { "const": false } },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["active", "context"],
+      "properties": { "active": { "const": true }, "context": { "$ref": "#/$defs/context" } },
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "request": {
+      "type": "object",
+      "required": ["token", "audience", "dpopProof", "includeContext"],
+      "properties": {
+        "token": { "type": "string", "minLength": 1 },
+        "audience": { "type": "string", "minLength": 1 },
+        "dpopProof": { "type": "string", "minLength": 1 },
+        "includeContext": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "required": ["schemaVersion", "namespace", "agentId", "agentRef", "agentClass", "registryClass", "identityType", "agentEpoch", "identityEpoch", "instanceId", "issuer", "audience", "expiresAt", "tokenHash", "presenterJkt"],
+      "properties": {
+        "schemaVersion": { "const": "eidovela.token-context.v1" },
+        "namespace": { "type": "string", "format": "uri", "minLength": 1 },
+        "agentId": { "type": "string", "minLength": 1 },
+        "agentRef": { "type": "string", "minLength": 1 },
+        "agentClass": { "enum": ["twin", "service", "ephemeral"] },
+        "registryClass": { "type": "string", "minLength": 1 },
+        "identityType": { "enum": ["interactive", "autonomous", "digitalEmployee"] },
+        "subjectRef": { "type": "string", "pattern": "\\S" },
+        "agentEpoch": { "type": "integer", "minimum": 1 },
+        "identityEpoch": { "type": "integer", "minimum": 1 },
+        "instanceId": { "type": "string", "minLength": 1 },
+        "issuer": { "type": "string", "format": "uri", "minLength": 1 },
+        "audience": { "type": "string", "minLength": 1 },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "tokenHash": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+        "presenterJkt": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "identityType": { "const": "autonomous" } } },
+          "then": { "not": { "required": ["subjectRef"] } },
+          "else": { "required": ["subjectRef"] }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

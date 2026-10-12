@@ -87,6 +87,39 @@ so remote daemons (`-server` to another host) cannot run `F*` fixtures.
 
 ## Coverage
 
+### Candidate FP-1 Provider Fixtures
+
+`presentation/fixtures.json` is an independent candidate-profile matrix, executed
+by `presentation/presentation_test.go` against an explicitly selected, freshly
+built Core daemon. It exercises real enrollment, credential activation, token
+issuance, DPoP checks, token-bound context, and Open SDK interoperability, backed
+by the in-process fake NOMIVELA registry. It does not exercise PRAXOVELA,
+LIMENORA, real NOMIVELA, or multi-replica PostgreSQL replay.
+
+From Core `backend/`, build a separate binary without replacing the legacy
+runner's bundled binary (use `.exe` on Windows):
+
+```text
+go build -o ../../EIDOVELA-open/conformance/bin/eidovelad-fp1.exe ./cmd/eidovelad
+```
+
+From EIDOVELA-open:
+
+```text
+go test ./conformance/presentation -v -count=1 -args -presentation-daemon ../bin/eidovelad-fp1.exe
+```
+
+The binary argument is relative to the test package directory; an absolute path
+also works. Alternatively set `EIDOVELA_PRESENTATION_DAEMON` to that absolute path. Without
+either selection these opt-in tests skip, so `go test ./...` alone is not FP-1
+provider acceptance. The existing `runner/` tests use their separately selected
+legacy binary; their passing results do not validate the new candidate API.
+
+The candidate's contract is in
+[`contracts/v3.0/federated-presentation.md`](../contracts/v3.0/federated-presentation.md).
+
+### Existing Families
+
 | Family | Covered | Notes |
 |---|---|---|
 | T1 PoP binding | N-T1-1, P-T1-1 | wrong-key introspect inactive; valid twin active |

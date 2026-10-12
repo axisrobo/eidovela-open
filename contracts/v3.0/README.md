@@ -34,6 +34,14 @@ snake_case, `tenant_id`-bearing line. `v1` and `v1alpha1` remain published.
 - `credential.schema.json`
 - `attestation-result.schema.json`
 
+## Candidate Presentation Profile
+
+`federated-presentation.md` specifies FP-1 separate resource/introspection proofs
+and the additive opt-in token-bound context API. Its response/request definitions
+are in `token-context-introspection.schema.json`. This candidate is not a claim
+of PRAXOVELA/LIMENORA production conformance; gateway transport and end-to-end
+acceptance remain release gates. Existing contracts above are not reinterpreted.
+
 ## Stability
 
 `v3.0` is a new, incompatible contract line. Within `v3.0`, additive evolution is
