@@ -29,6 +29,15 @@
       "description": "Raw NOMIVELA agent_class, for traceability.",
       "type": "string"
     },
+    "identityType": {
+      "description": "Registry-owned Agent Identity type. Empty for legacy untyped identities.",
+      "enum": ["interactive", "autonomous", "digitalEmployee", ""]
+    },
+    "subjectRef": {
+      "description": "Bound subject for interactive/digitalEmployee identities; omitted when not applicable.",
+      "type": "string",
+      "minLength": 1
+    },
     "agentState": {
       "enum": ["draft", "registered", "approved", "active", "suspended", "retired"]
     },

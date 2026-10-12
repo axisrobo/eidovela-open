@@ -14,6 +14,10 @@ The `v3.0` contract line applies the Agent IAM Series contract conventions
 `v2` remains published and frozen for consumers that integrate with the previous
 snake_case, `tenant_id`-bearing line. `v1` and `v1alpha1` remain published.
 
+`verified-agent-context.schema.json` additionally exposes the registry-owned
+`identityType` and, when applicable, `subjectRef` (additive). This requires
+NOMIVELA SDK v2.1.0 or later; legacy identities surface an empty `identityType`.
+
 ## What changed from v2
 
 | Area | v2 | v3.0 |
