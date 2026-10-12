@@ -118,7 +118,9 @@ provider acceptance. The existing `runner/` tests use their separately selected
 legacy binary; their passing results do not validate the new candidate API.
 
 The candidate's contract is in
-[`contracts/v3.0/federated-presentation.md`](../contracts/v3.0/federated-presentation.md).
+[`contracts/v3.0/federated-presentation.md`](../contracts/v3.0/federated-presentation.md);
+the consumer checklist is in
+[`docs/consumer-integration-fp1.md`](../docs/consumer-integration-fp1.md).
 
 ### Existing Families
 

@@ -47,6 +47,7 @@ Contents:
 - `conformance/` — executable threat-scenario fixtures + HTTP runner (`cmd/eidovela-conformance`) driving a live daemon; the core daemon is built on demand (not committed)
 - `docs/conformance-claim-v2.md` — EIDOVELA 2.0 implementation claim and deployment prerequisites
 - `docs/interoperability.md` — how to run the fixtures and which Agent IAM Series parts they cover
+- `docs/consumer-integration-fp1.md` — how PRAXOVELA (client) and LIMENORA (gateway) consume the v3 SDK and implement the FP-1 presentation profile
 
 The core server implementation lives in the AGPL repository: <https://github.com/axisrobo/eidovela>
 

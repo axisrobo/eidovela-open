@@ -202,3 +202,5 @@ is implementation in PRAXOVELA (DPoP signing and carriage) and LIMENORA
 dispatch), followed by FP-01 through FP-12 real-component acceptance. Until those
 exist, federated production remains blocked. Local Core HTTP tests and Open SDK
 tests are provider evidence only, not a complete federated presentation claim.
+For the consumer-side implementation checklist, see
+[`docs/consumer-integration-fp1.md`](../../docs/consumer-integration-fp1.md).
