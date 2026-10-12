@@ -71,6 +71,18 @@ non-intercepted tunnel):
 | `authority_binding` | Accept a `connect_header` proof bound to `host:port`; valid only together with `resource_proof_carriage=connect_header` |
 | `passthrough_non_agent` | Allowed only when the route was not selected for agent processing; existing application auth continues |
 
+Additional carriage parameters (also operator-configured and versioned):
+
+- `resource_proof_header` — header name carrying the resource proof. Default
+  `DPoP` for `request_header` mode (RFC 9449). `connect_header` mode uses a
+  distinct, versioned name because RFC 9449 defines no CONNECT proof.
+- `resource_proof_scheme` — authorization-scheme prefix, default `DPoP`.
+- Introspection carriage uses EIDOVELA's fixed field `dpopProof` over a
+  server-to-server channel; it is not caller-configurable.
+
+These names are resolved from trusted route/gateway configuration, never from the
+incoming request, and MUST NOT be derived from any caller-supplied header list.
+
 `htu` is always derived from trusted routing under the selected mode, never from
 caller `Forwarded`/`X-Forwarded-*` headers. In `request_header` mode the inner
 request must actually be intercepted; a route that is not intercepted MUST NOT
@@ -85,12 +97,43 @@ Regardless of configuration:
   fails; provider outage, replay-store failure, and missing context deny.
 - Invalid combinations (for example `authority_binding` without `connect_header`)
   fail startup validation rather than degrade silently.
-- The proof header name and any tunnel-extension syntax are operator-configured
-  and versioned, never inferred from the request.
+- Proof headers (resource and introspection) are removed before the request is
+  forwarded upstream, so no proof or token reaches the destination service.
 
 Authority binding is a deliberately weaker guarantee (no path binding). Routes
 that need path-level PoP MUST use `request_header` with interception; the default
 posture denies un-intercepted agent traffic.
+
+## Normative Target Normalization (`htu-normalization.v1`)
+
+Both the gateway and EIDOVELA MUST implement byte-for-byte identical comparison.
+Given a signed `htu` and the trusted request target:
+
+1. Parse both as absolute URIs. Reject if the scheme is not `http`/`https`, the
+   host is empty, userinfo is present, or the URI is opaque.
+2. Compare scheme and host case-insensitively; do NOT strip or add default ports
+   (an explicit `:443`/`:80` is significant).
+3. Compare `EscapedPath()` byte-exactly: path case and percent-escapes are
+   significant and a trailing `/` is distinct.
+4. Ignore query and fragment entirely (RFC 9449); they are not integrity-protected.
+5. `connect_header` (authority) mode compares scheme + host[:port] only.
+
+No `Forwarded`/`X-Forwarded-*` header, proxy rewrite, dot-segment removal, or
+percent-escape re-encoding may participate. Resource semantics that depend on
+query/body require a separate, explicitly approved binding not defined here.
+
+## Replay Ledger Contract
+
+- Gateway resource-proof domain: `resource:` + `jti`, deployment-scoped;
+  EIDOVELA introspection domain: `dpop:` + `jti` (existing). Domains MUST NOT
+  collide.
+- Consumption is atomic and shared across all gateway replicas (a shared store
+  such as PostgreSQL); per-process memory is not acceptable for production.
+- Retention MUST cover the full proof acceptance window (age + future skew) before
+  a record may be pruned; pruning must never make a still-valid proof reusable.
+- Storage failure denies the request; it never degrades to accept or to a
+  process-local fallback.
+- Retries always carry fresh `jti`; a consumed `jti` is never re-accepted.
 
 ## Token-Bound Context API
 
@@ -151,10 +194,11 @@ The new Go SDK method bounds transport without changing frozen legacy methods.
 
 ## Remaining Freeze and Release Gates
 
-Carriage and tunnel behavior are now defined as configurable operator policy
-above. What remains is implementation and agreement on the concrete proof header
-name/syntax, the exact `htu` normalization function shared by both sides, the
-shared replay-store deployment, and authorization dispatch/retry behavior. Until
-those exist together with FP-01 through FP-12 real-component tests, federated
-production remains blocked. Local Core HTTP tests and Open SDK tests are provider
-evidence only, not a complete federated presentation claim.
+Carriage, target normalization, the proof header/scheme, and the replay contract
+are now frozen above; the header/scheme and carriage choices are
+operator-configurable, and normalization and replay are normative. What remains
+is implementation in PRAXOVELA (DPoP signing and carriage) and LIMENORA
+(configuration, resource-proof verification, introspection call, and binding
+dispatch), followed by FP-01 through FP-12 real-component acceptance. Until those
+exist, federated production remains blocked. Local Core HTTP tests and Open SDK
+tests are provider evidence only, not a complete federated presentation claim.
