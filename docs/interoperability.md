@@ -8,8 +8,8 @@ and what a passing run does and does not prove.
 
 | Item | Version |
 |---|---|
-| EIDOVELA | 2.2.1 |
-| Public contracts | `contracts/v2` (Registry Consumer); `contracts/v1` frozen |
+| EIDOVELA | 2.2.2 |
+| Public contracts | `contracts/v3.0` (Registry Consumer, lowerCamelCase); `contracts/v2` and `contracts/v1` frozen |
 | NOMIVELA Agent Registry contract | `agent-registry-v1.0` |
 | NOMIVELA SDK | `github.com/axisrobo/nomivela-open/v2` |
 
@@ -84,7 +84,7 @@ EIDOVELA_TEST_NOMIVELA_TOKEN=<service principal with registry.write, registry.re
 
 An independent implementation can reuse the fixtures by providing an HTTP
 endpoint compatible with the EIDOVELA consumer-mode contract
-(`contracts/v2`): enrollment, token issuance, introspection, registry read
+(`contracts/v3.0`): enrollment, token issuance, introspection, registry read
 views, verified agent context, and the authentication-state and credential
 lifecycle endpoints. The fixture schema
 (`conformance/fixtures/fixture.schema.json`) documents each step operation.

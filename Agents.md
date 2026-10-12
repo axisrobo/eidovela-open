@@ -40,4 +40,4 @@ the frozen v2 snake_case client.
 - `authentication` — Credential generations and authentication state (quarantine/disable)
 - `enrollment` — Proof-of-possession plus workload attestation, commits the Agent Instance to NOMIVELA
 - `sts` — Dual-epoch PoP identity tokens, exchange and introspection
-- `contracts/v2` — Public contracts for the registry-consumer model
+- `contracts/v3.0` — Current lowerCamelCase public contracts for the registry-consumer model; `contracts/v2` and `contracts/v1` are frozen

@@ -29,8 +29,8 @@ Agent 系统面临通用 IdP 无法回答的身份问题：*「谁被允许在�
 
 目录内容：
 
-- `contracts/` —— 版本化公共契约 schema（v1 稳定版；保留 v1alpha1）
-- `sdk/go` —— Go SDK（HTTP 客户端、Ed25519 PoP 密钥生成、离线 JWT/JWKS 校验、RFC 8693 令牌交换 profile）
+- `contracts/` —— 版本化公共契约 schema（v3.0 lowerCamelCase 注册中心消费线为当前默认；v2、v1 冻结；保留 v1alpha1）
+- `sdk/go` —— Go SDK：`sdk/go/eidovela/v3` 为当前 v3.0 lowerCamelCase 客户端（登记、PoP 令牌、introspection + 令牌上下文、DPoP 签名、注册中心读取）；`sdk/go/eidovela` 为冻结的 v2 snake_case 客户端
 - `cli/` —— 命令行工具
 - `examples/` —— 集成示例
 - `conformance/` —— 可执行的威胁场景测试夹具 + 驱动真实守护进程的 HTTP runner（`cmd/eidovela-conformance`）；核心守护进程按需构建（不提交到仓库）

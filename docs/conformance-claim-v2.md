@@ -1,7 +1,7 @@
 # EIDOVELA 2.0 Conformance Claim
 
 Status: project implementation claim, not a certification  
-Version: 2.2.1  
+Version: 2.2.2
 Date: 2026-09-28
 
 ## Scope
@@ -39,7 +39,7 @@ lifecycle records.
 | Identity token | Ed25519 `EdDSA`, `cnf.jkt` (RFC 7638), `agent_epoch` + `identity_epoch`, audience-bound | TTL 10 minutes |
 | Request PoP | RFC 9449 DPoP on introspection (`htm`/`htu`/`ath`/`jti`) | Optional; mandatory with `EIDOVELA_REQUIRE_DPOP=1` |
 | Registry contract | NOMIVELA `agent-registry-v1.0` via `nomivela-open/v2` | Registry Context, idempotent commit, signed discovery, event cursor |
-| Public contracts | `contracts/v2` (Registry Consumer), `contracts/v1` (frozen) | — |
+| Public contracts | `contracts/v3.0` (Registry Consumer, lowerCamelCase), `contracts/v2` and `contracts/v1` (frozen) | — |
 
 ## Bounds
 

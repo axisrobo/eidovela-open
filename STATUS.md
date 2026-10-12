@@ -1,6 +1,6 @@
 # EIDOVELA Status
 
-**Version:** 2.2.1 | **Contract line:** v2 (Registry Consumer); v1 frozen
+**Version:** 2.2.2 | **Contract line:** v3.0 (Registry Consumer, lowerCamelCase); v2 and v1 frozen
 
 This repository (`eidovela-open`, Apache-2.0) publishes released public
 contracts, SDKs, CLI, examples, conformance and distribution status. The
@@ -9,8 +9,8 @@ summarized below. Internal EE planning remains in the private EE repository.
 
 | Repository | License | Version |
 |---|---|---|
-| `eidovela` (core) | AGPL-3.0-or-later | shared with open (`2.2.1`) |
-| `eidovela-open` (this repo) | Apache-2.0 | shared with core (`2.2.1`) |
+| `eidovela` (core) | AGPL-3.0-or-later | shared with open (`2.2.2`) |
+| `eidovela-open` (this repo) | Apache-2.0 | shared with core (`2.2.2`) |
 | `eidovela-ee` (enterprise) | AxisRobo Enterprise License | independent (`0.6.0`) |
 
 ## Core — `eidovela` (AGPL-3.0-or-later)
@@ -60,10 +60,11 @@ Verification: `go build/vet/test ./...` green in `backend/`.
 
 The developer-facing distribution.
 
-- `contracts/` — public contract schemas: `v2` (Registry Consumer, default),
-  `v1` (frozen), `v1alpha1` (retained).
-- `sdk/go` — Go SDK: HTTP client, Ed25519 PoP key generation, offline JWT/JWKS
-  verification, RFC 8693 token-exchange profile.
+- `contracts/` — public contract schemas: `v3.0` (Registry Consumer,
+  lowerCamelCase, default), `v2` (frozen), `v1` (frozen), `v1alpha1` (retained).
+- `sdk/go` — Go SDK: `sdk/go/eidovela/v3` (lowerCamelCase client for the v3.0
+  daemon: enrollment, PoP token, introspection + token context, DPoP signing,
+  registry reads); `sdk/go/eidovela` is the frozen v2 snake_case client.
 - `cli/`, `examples/` — command-line tool and integration examples.
 - `conformance/` — executable threat-scenario fixtures and the HTTP runner
   (`cmd/eidovela-conformance`) driving a consumer-mode daemon against an
