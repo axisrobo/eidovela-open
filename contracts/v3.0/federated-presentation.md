@@ -8,10 +8,13 @@ PRAXOVELA/LIMENORA owner review or end-to-end production acceptance.
 
 This initial profile supports locally issued EIDOVELA registry-bound tokens
 presented through an inspecting HTTP gateway. Peer and brokered identity context,
-opaque HTTPS CONNECT tunnels, resource-query/body integrity, and token exchange
-at the proxy are not supported by this candidate. Routes requiring those
-guarantees MUST NOT claim FP-1 conformance. Existing application authentication
-must not be replaced by optional agent processing.
+resource-query/body integrity, and token exchange at the proxy are not supported
+by this candidate. Opaque HTTPS CONNECT tunnels are supported only under the
+operator-configurable carriage/tunnel policy below; a raw tunnel with agent
+processing selected and no accepted binding is denied, never treated as
+NotApplicable. Routes requiring unsupported guarantees MUST NOT claim FP-1
+conformance. Existing application authentication must not be replaced by optional
+agent processing.
 
 ## Separate Proofs
 
@@ -43,6 +46,51 @@ Neither store may silently switch to per-process memory in production.
 Proofs are consumed before downstream token/policy decisions. Every retry uses
 new proofs; retries never duplicate an already dispatched operation. An invalid
 or unavailable agent provider MUST NOT trigger native/application fallback.
+
+## Configurable Carriage and Tunnel Policy
+
+Two operator-controlled, per-route policies decide where the resource proof is
+carried and how an un-intercepted CONNECT tunnel is treated. Both are LIMENORA
+`GATEWAY_*` configuration; PRAXOVELA aligns its client behavior to the same
+profile. Neither is caller-supplied, and both are validated at startup.
+
+`resource_proof_carriage`:
+
+| Value | Carriage | Binding target (`htu`) | Requirement |
+| --- | --- | --- | --- |
+| `request_header` (default) | Dedicated proof header on the intercepted inner request | `scheme://host/path` (normalized) | Requires MITM interception of the route |
+| `connect_header` | Dedicated proof header on the CONNECT request | `scheme://host:port` (authority only) | Explicit opt-in; path is not covered |
+| `disabled` | None | — | Route must not require presentation |
+
+`agent_tunnel_policy` (when a route requires presentation but traffic is a raw,
+non-intercepted tunnel):
+
+| Value | Behavior |
+| --- | --- |
+| `deny` (default) | Reject the agent request; never NotApplicable; never downgrade |
+| `authority_binding` | Accept a `connect_header` proof bound to `host:port`; valid only together with `resource_proof_carriage=connect_header` |
+| `passthrough_non_agent` | Allowed only when the route was not selected for agent processing; existing application auth continues |
+
+`htu` is always derived from trusted routing under the selected mode, never from
+caller `Forwarded`/`X-Forwarded-*` headers. In `request_header` mode the inner
+request must actually be intercepted; a route that is not intercepted MUST NOT
+fall back to authority binding. Query/fragment remain excluded in both modes.
+
+Regardless of configuration:
+
+- Presenter key = resource-proof key = EIDOVELA context `presenterJkt`; `ath` is
+  the SHA-256 of the exact presented token; resource and introspection proof use
+  distinct single-use `jti`.
+- `disabled` or a key-only request is never a fallback after a configured verifier
+  fails; provider outage, replay-store failure, and missing context deny.
+- Invalid combinations (for example `authority_binding` without `connect_header`)
+  fail startup validation rather than degrade silently.
+- The proof header name and any tunnel-extension syntax are operator-configured
+  and versioned, never inferred from the request.
+
+Authority binding is a deliberately weaker guarantee (no path binding). Routes
+that need path-level PoP MUST use `request_header` with interception; the default
+posture denies un-intercepted agent traffic.
 
 ## Token-Bound Context API
 
@@ -103,9 +151,10 @@ The new Go SDK method bounds transport without changing frozen legacy methods.
 
 ## Remaining Freeze and Release Gates
 
-PRAXOVELA/LIMENORA must agree resource-proof transport, trusted target derivation
-for their concrete proxy stack, and authorization dispatch/retry behavior. This
-document deliberately does not invent a gateway header consumed by nonexistent
-code. Until those agreements and FP-01 through FP-12 real-component tests exist,
-federated production remains blocked. Local Core HTTP tests and Open SDK tests
-are provider evidence only, not a complete federated presentation claim.
+Carriage and tunnel behavior are now defined as configurable operator policy
+above. What remains is implementation and agreement on the concrete proof header
+name/syntax, the exact `htu` normalization function shared by both sides, the
+shared replay-store deployment, and authorization dispatch/retry behavior. Until
+those exist together with FP-01 through FP-12 real-component tests, federated
+production remains blocked. Local Core HTTP tests and Open SDK tests are provider
+evidence only, not a complete federated presentation claim.
