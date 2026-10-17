@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/axisvela/eidovela-open/conformance/runner"
-	"github.com/axisvela/eidovela-open/sdk/go/eidovela"
+	"github.com/axisvela/eidovela-open/v3/conformance/runner"
+	"github.com/axisvela/eidovela-open/v3/sdk/go/eidovela"
 )
 
 //go:embed fixtures.json

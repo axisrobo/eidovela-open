@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/axisvela/eidovela-open/sdk/go/eidovela"
+	"github.com/axisvela/eidovela-open/v3/sdk/go/eidovela"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/axisvela/eidovela-open/conformance/runner"
+	"github.com/axisvela/eidovela-open/v3/conformance/runner"
 )
 
 // TestFixturesAgainstDaemon runs the executable conformance fixtures against a
