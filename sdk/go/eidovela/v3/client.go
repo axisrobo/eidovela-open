@@ -105,6 +105,7 @@ type RegistryInstance struct {
 	WorkloadID             string `json:"workloadId"`
 	ArtifactDigest         string `json:"artifactDigest"`
 	AttestationRef         string `json:"attestationRef"`
+	LeaseExpiresAt         string `json:"leaseExpiresAt,omitempty"`
 	State                  string `json:"state"`
 	Generation             int64  `json:"generation"`
 	Tokenable              bool   `json:"tokenable"`
@@ -316,6 +317,13 @@ func (c *Client) ListRegistryAgents(ctx context.Context) ([]RegistryAgent, error
 	return envelope.Agents, err
 }
 
+// GetRegistryAgent reads one registry agent view by id.
+func (c *Client) GetRegistryAgent(ctx context.Context, agentID string) (RegistryAgent, error) {
+	var agent RegistryAgent
+	err := c.get(ctx, "/v1/registry/agents/"+url.PathEscape(agentID), &agent)
+	return agent, err
+}
+
 // ListRegistryInstances lists the instances of an Agent.
 func (c *Client) ListRegistryInstances(ctx context.Context, agentID string) ([]RegistryInstance, error) {
 	var envelope struct {
@@ -357,6 +365,29 @@ func (c *Client) OutboxEvents(ctx context.Context) ([]OutboxEvent, error) {
 // RedriveOutboxEvent requeues a dead-lettered outbox entry.
 func (c *Client) RedriveOutboxEvent(ctx context.Context, eventID string) error {
 	return c.post(ctx, "/v1/ops/outbox/events/"+url.PathEscape(eventID)+"/redrive", nil, &struct{}{})
+}
+
+// KeyStatus is the read-only signing-key custody status. The core ops keys
+// endpoint is a legacy surface and still emits snake_case fields.
+type KeyStatus struct {
+	ActiveKID string   `json:"active_kid"`
+	Kids      []string `json:"kids"`
+	Overlap   bool     `json:"overlap"`
+}
+
+// KeyStatus reads the active signing kid and the keys valid now (grace overlap).
+func (c *Client) KeyStatus(ctx context.Context) (KeyStatus, error) {
+	var status KeyStatus
+	err := c.get(ctx, "/v1/ops/keys", &status)
+	return status, err
+}
+
+// RotateSigningKey rotates the active signing key with an overlapping grace
+// window (operator-initiated).
+func (c *Client) RotateSigningKey(ctx context.Context) (KeyStatus, error) {
+	var status KeyStatus
+	err := c.post(ctx, "/v1/ops/keys/rotate", nil, &status)
+	return status, err
 }
 
 // CreateFederationTrust creates or replaces a peer trust anchor.

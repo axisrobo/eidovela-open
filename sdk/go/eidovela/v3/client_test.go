@@ -16,8 +16,10 @@ func captureServer(t *testing.T, body string, got *map[string]any, path *string)
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		*path = r.URL.Path
-		if err := json.NewDecoder(r.Body).Decode(got); err != nil && body != "" {
-			t.Errorf("decode request: %v", err)
+		if r.ContentLength != 0 {
+			if err := json.NewDecoder(r.Body).Decode(got); err != nil {
+				t.Errorf("decode request: %v", err)
+			}
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -89,5 +91,39 @@ func TestClientSendsCamelCaseExchangeAndFederation(t *testing.T) {
 	}
 	if _, ok := envelope["claim_mappings"]; ok {
 		t.Fatalf("trust request leaked snake_case: %+v", envelope)
+	}
+}
+
+func TestClientReadsRegistryAndOpsSurfaces(t *testing.T) {
+	var path string
+	var got map[string]any
+	srv := captureServer(t, `{"namespace":"ns","agentId":"a1","agentClass":"service","agentState":"active","identityState":"active"}`, &got, &path)
+	defer srv.Close()
+	client := NewClient(srv.URL)
+	if _, err := client.GetRegistryAgent(context.Background(), "a1"); err != nil {
+		t.Fatal(err)
+	}
+	if path != "/v1/registry/agents/a1" {
+		t.Fatalf("get registry agent path = %s", path)
+	}
+
+	srv2 := captureServer(t, `{"active_kid":"k2","kids":["k1","k2"],"overlap":true}`, &got, &path)
+	defer srv2.Close()
+	client2 := NewClient(srv2.URL)
+	status, err := client2.KeyStatus(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if path != "/v1/ops/keys" || status.ActiveKID != "k2" || !status.Overlap {
+		t.Fatalf("key status = %+v path=%s", status, path)
+	}
+
+	srv3 := captureServer(t, `{"active_kid":"k3","kids":["k2","k3"],"overlap":true}`, &got, &path)
+	defer srv3.Close()
+	if _, err := NewClient(srv3.URL).RotateSigningKey(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if path != "/v1/ops/keys/rotate" {
+		t.Fatalf("rotate path = %s", path)
 	}
 }
