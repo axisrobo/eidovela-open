@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/axisrobo/eidovela-open/conformance/runner"
+	"github.com/axisvela/eidovela-open/conformance/runner"
 )
 
 func main() {

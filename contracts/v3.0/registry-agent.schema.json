@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/registry-agent.schema.json",
+  "$id": "https://github.com/axisvela/eidovela-open/contracts/v3.0/registry-agent.schema.json",
   "title": "RegistryAgentView",
   "description": "Read-only EIDOVELA projection of a NOMIVELA Agent Record joined with its Agent Identity Record.",
   "type": "object",

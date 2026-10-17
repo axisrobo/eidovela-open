@@ -2,7 +2,7 @@
 
 The executable conformance runner (`cmd/eidovela-conformance`) and the fixture
 suite drive a live EIDOVELA **core** issuer daemon
-(`github.com/axisrobo/eidovela`, AGPL-3.0-or-later) from this directory.
+(`github.com/axisvela/eidovela`, AGPL-3.0-or-later) from this directory.
 
 The binary is **not** committed. This directory is gitignored; the conformance
 scripts and CI build the daemon here on demand, so a separate core checkout is
@@ -17,7 +17,7 @@ implementation. No AGPL binary is redistributed.
 ## Building
 
 ```text
-# from a checkout of github.com/axisrobo/eidovela (backend/)
+# from a checkout of github.com/axisvela/eidovela (backend/)
 go build -o ../../eidovela-open/conformance/bin/eidovelad ./cmd/eidovelad
 ```
 

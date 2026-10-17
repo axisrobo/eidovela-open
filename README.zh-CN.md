@@ -35,7 +35,7 @@ Agent 系统面临通用 IdP 无法回答的身份问题：*「谁被允许在�
 - `examples/` —— 集成示例
 - `conformance/` —— 可执行的威胁场景测试夹具 + 驱动真实守护进程的 HTTP runner（`cmd/eidovela-conformance`）；核心守护进程按需构建（不提交到仓库）
 
-核心服务端实现位于 AGPL 仓库：<https://github.com/axisrobo/eidovela>
+核心服务端实现位于 AGPL 仓库：<https://github.com/axisvela/eidovela>
 
 ### 公共 API 面
 
@@ -71,5 +71,5 @@ Go SDK 位于 `sdk/go/eidovela`。离线校验不检查当前生命周期 epoch�
 ---
 
 - 许可证：Apache-2.0
-- 模块：`github.com/axisrobo/eidovela-open`
+- 模块：`github.com/axisvela/eidovela-open`
 - 分发治理：`STATUS.md`、`COMPATIBILITY.md` 与 `contracts/README.md`

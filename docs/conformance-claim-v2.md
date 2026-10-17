@@ -7,7 +7,7 @@ Date: 2026-09-28
 ## Scope
 
 EIDOVELA 2.0 implements the Registry Consumer profile against NOMIVELA Agent
-Registry contract 1.0 through `github.com/axisrobo/nomivela-open/v2`.
+Registry contract 1.0 through `github.com/axisvela/nomivela-open/v2`.
 
 It consumes Registry Context, signed discovery, scoped service principals,
 Agent ID, Authority Binding, Workload Registration, Agent Instance or registry

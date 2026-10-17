@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/axisrobo/eidovela-open/sdk/go/eidovela"
+	"github.com/axisvela/eidovela-open/sdk/go/eidovela"
 )
 
 func main() {

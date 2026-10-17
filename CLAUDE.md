@@ -7,9 +7,9 @@ This repository uses **superpowers** as the agent harness (`.claude/settings.jso
 ## Repository
 
 - Product: EIDOVELA — public contracts, SDKs, CLI, examples, conformance runner
-- Module: `github.com/axisrobo/eidovela-open`
+- Module: `github.com/axisvela/eidovela-open`
 - License: Apache-2.0
-- Core implementation (AGPL): `github.com/axisrobo/eidovela`
+- Core implementation (AGPL): `github.com/axisvela/eidovela`
 
 ## Conventions
 

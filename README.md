@@ -49,7 +49,7 @@ Contents:
 - `docs/interoperability.md` — how to run the fixtures and which Agent IAM Series parts they cover
 - `docs/consumer-integration-fp1.md` — how PRAXOVELA (client) and LIMENORA (gateway) consume the v3 SDK and implement the FP-1 presentation profile
 
-The core server implementation lives in the AGPL repository: <https://github.com/axisrobo/eidovela>
+The core server implementation lives in the AGPL repository: <https://github.com/axisvela/eidovela>
 
 ### Public API surface
 
@@ -95,7 +95,7 @@ introspection.
 ---
 
 - License: Apache-2.0
-- Module: `github.com/axisrobo/eidovela-open/v2`
+- Module: `github.com/axisvela/eidovela-open/v2`
 - Distribution governance: `STATUS.md`, `COMPATIBILITY.md` and `contracts/README.md`
 ## Core status (recorded here; no external links)
 

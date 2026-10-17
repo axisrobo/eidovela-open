@@ -11,7 +11,7 @@ and what a passing run does and does not prove.
 | EIDOVELA | 2.2.2 |
 | Public contracts | `contracts/v3.0` (Registry Consumer, lowerCamelCase); `contracts/v2` and `contracts/v1` frozen |
 | NOMIVELA Agent Registry contract | `agent-registry-v1.0` |
-| NOMIVELA SDK | `github.com/axisrobo/nomivela-open/v2` |
+| NOMIVELA SDK | `github.com/axisvela/nomivela-open/v2` |
 
 ## Coverage by Agent IAM Series part
 

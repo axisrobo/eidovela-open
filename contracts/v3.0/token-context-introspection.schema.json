@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/token-context-introspection.schema.json",
+  "$id": "https://github.com/axisvela/eidovela-open/contracts/v3.0/token-context-introspection.schema.json",
   "title": "TokenContextIntrospectionResponse",
   "description": "Candidate FP-1 opt-in POST /v1/introspect response; not the GET registry context.",
   "oneOf": [

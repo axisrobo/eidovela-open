@@ -19,13 +19,13 @@ Both consumers are Go modules. Depend on the lowerCamelCase client (not the
 frozen v2 package):
 
 ```text
-require github.com/axisrobo/eidovela-open v0.0.0
+require github.com/axisvela/eidovela-open v0.0.0
 
 // local sibling checkout; publish to a tagged module for release
-replace github.com/axisrobo/eidovela-open => ../../../EIDOVELA-open
+replace github.com/axisvela/eidovela-open => ../../../EIDOVELA-open
 ```
 
-Import path: `github.com/axisrobo/eidovela-open/sdk/go/eidovela/v3`.
+Import path: `github.com/axisvela/eidovela-open/sdk/go/eidovela/v3`.
 
 ## What the SDK provides
 

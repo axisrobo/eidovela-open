@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/authentication-state.schema.json",
+  "$id": "https://github.com/axisvela/eidovela-open/contracts/v3.0/authentication-state.schema.json",
   "title": "AuthenticationState",
   "description": "EIDOVELA-owned authentication state for one Agent Identity. Absence of a record means the derived default applies.",
   "type": "object",

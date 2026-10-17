@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/attestation-result.schema.json",
+  "$id": "https://github.com/axisvela/eidovela-open/contracts/v3.0/attestation-result.schema.json",
   "title": "AttestationResult",
   "description": "Sanitized EIDOVELA record of the evidence that bound a workload to an Agent Instance. Raw certificates, projected tokens, private keys and unrestricted attributes are never present.",
   "type": "object",

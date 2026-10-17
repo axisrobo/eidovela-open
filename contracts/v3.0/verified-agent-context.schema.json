@@ -1,6 +1,6 @@
-﻿{
+{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/axisrobo/eidovela-open/contracts/v3.0/verified-agent-context.schema.json",
+  "$id": "https://github.com/axisvela/eidovela-open/contracts/v3.0/verified-agent-context.schema.json",
   "title": "VerifiedAgentIdentityContext",
   "description": "Profile-neutral verified Agent identity context returned by GET /v1/verified-agent-context for AEGIVELA and product PEPs.",
   "type": "object",
