@@ -97,3 +97,6 @@ introspection.
 - License: Apache-2.0
 - Module: `github.com/axisrobo/eidovela-open/v2`
 - Distribution governance: `STATUS.md`, `COMPATIBILITY.md` and `contracts/README.md`
+## Core status (recorded here; no external links)
+
+No core change in this cycle; the open SDK and contract surfaces are unchanged.
